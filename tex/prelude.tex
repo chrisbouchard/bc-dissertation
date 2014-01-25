@@ -1,27 +1,9 @@
-\usepackage[xetex]{graphicx}
-\usepackage[nottoc,section]{tocbibind}
-\usepackage[xetex,bookmarks]{hyperref}
-\usepackage{bookmark}
-\usepackage{xltxtra}
-\usepackage[paper=letterpaper, margin=1in, bindingoffset=0.5in]{geometry}
-\usepackage{layout}
-\usepackage{multicol}
-\usepackage{wrapfig}
-\usepackage{calc}
-\usepackage{etoolbox}
-\usepackage{ccicons}
-\usepackage[shortcuts]{extdash}
-\usepackage{titling}
-\usepackage[nodayofweek,24hr]{datetime}
-\usepackage[table]{xcolor}
-\usepackage{environ}
-\usepackage{longtable}
-\usepackage{pgffor}
-
-\setmainfont[Ligatures={Common,TeX}, Numbers={Proportional}]{Linux Libertine}
-\setmonofont[Scale=0.9]{Luxi Mono}
+\geometry{paper=letterpaper, margin=1in, bindingoffset=0.5in}
 
 \urlstyle{same}
+
+\renewcommand{\tocbibname}{\refname}
+\bibliographystyle{plainnat}
 
 \renewcommand{\dateseparator}{-}
 
@@ -35,4 +17,9 @@
     \parindent 1em\noindent\hb@xt@ 1.8em{\hss\@makefnmark}~#1%
 }
 \makeatother
+
+\newcommand{\theadvisor}{}
+\newcommand{\advisor}[1]{\renewcommand{\theadvisor}{#1}}
+
+\newcommand{\TitleListing}[1]{\texorpdfstring{\lstinline|#1|}{#1}}
 

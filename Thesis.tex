@@ -1,13 +1,18 @@
-\documentclass[11pt,titlepage]{book}
+\documentclass[11pt,titlepage,openany]{book}
 
-\input{tex/prelude.tex}
+\input{tex/packages.tex}
+\input{tex/setup.tex}
+\input{tex/notation.tex}
 
-\title{Unification Modulo a Theory of Chaining}
-\author{Chris Bouchard}
+\title{Equational Unification Modulo a Theory of Chaining}
+\author{Christopher Bouchard}
+\advisor{Paliath Narendran}
 \date{\ddmmmyyyydate\today}
 
 \begin{document}
-    \pagenumbering{gobble}
+    \frontmatter
+
+    \pagestyle{empty}
 
     \begin{titlepage}
         \pdfbookmark{\thetitle}{Title Page}
@@ -16,18 +21,31 @@
 
     \cleardoublepage
 
+    \vspace*{\fill}
     \begin{center}
-        \begin{minipage}{0.85\linewidth}
+        \begin{minipage}{0.9\linewidth}
             \input{tex/copyright.tex}
         \end{minipage}
     \end{center}
+    \vspace*{\fill}
+    \vspace*{\fill}
     \cleardoublepage
+
+    \pagestyle{headings}
+
+    \chapter{Abstract}
+    \input{tex/abstract.tex}
+
+    \chapter{Acknowledgements}
+    \input{tex/acknowledgements.tex}
 
     \tableofcontents
     \cleardoublepage
 
-    \pagenumbering{arabic}
+    \mainmatter
 
     \input{chapters.tex}
+
+    \bibliography{Thesis}
 \end{document}
 
