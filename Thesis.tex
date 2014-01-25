@@ -1,0 +1,33 @@
+\documentclass[11pt,titlepage]{book}
+
+\input{tex/prelude.tex}
+
+\title{Unification Modulo a Theory of Chaining}
+\author{Chris Bouchard}
+\date{\ddmmmyyyydate\today}
+
+\begin{document}
+    \pagenumbering{gobble}
+
+    \begin{titlepage}
+        \pdfbookmark{\thetitle}{Title Page}
+        \input{tex/titlepage.tex}
+    \end{titlepage}
+
+    \cleardoublepage
+
+    \begin{center}
+        \begin{minipage}{0.85\linewidth}
+            \input{tex/copyright.tex}
+        \end{minipage}
+    \end{center}
+    \cleardoublepage
+
+    \tableofcontents
+    \cleardoublepage
+
+    \pagenumbering{arabic}
+
+    \input{chapters.tex}
+\end{document}
+

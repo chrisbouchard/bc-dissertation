@@ -1,0 +1,38 @@
+\usepackage[xetex]{graphicx}
+\usepackage[nottoc,section]{tocbibind}
+\usepackage[xetex,bookmarks]{hyperref}
+\usepackage{bookmark}
+\usepackage{xltxtra}
+\usepackage[paper=letterpaper, margin=1in, bindingoffset=0.5in]{geometry}
+\usepackage{layout}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage{calc}
+\usepackage{etoolbox}
+\usepackage{ccicons}
+\usepackage[shortcuts]{extdash}
+\usepackage{titling}
+\usepackage[nodayofweek,24hr]{datetime}
+\usepackage[table]{xcolor}
+\usepackage{environ}
+\usepackage{longtable}
+\usepackage{pgffor}
+
+\setmainfont[Ligatures={Common,TeX}, Numbers={Proportional}]{Linux Libertine}
+\setmonofont[Scale=0.9]{Luxi Mono}
+
+\urlstyle{same}
+
+\renewcommand{\dateseparator}{-}
+
+\newdateformat{ddmmmyyyydate}{%
+    \ifshowdow\dayofweekname{\THEDAY}{\THEMONTH}{\THEYEAR}\fi
+    \THEDAY{} \monthname[\THEMONTH{}] \THEYEAR{}%
+}
+
+\makeatletter
+\long\def\@makefntext#1{%
+    \parindent 1em\noindent\hb@xt@ 1.8em{\hss\@makefnmark}~#1%
+}
+\makeatother
+
