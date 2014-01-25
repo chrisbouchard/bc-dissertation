@@ -1,35 +1,47 @@
+% Some common one-letter variables
 \newcommand{\A}{\mathcal{A}}
 \newcommand{\E}{\mathcal{E}}
 \newcommand{\T}{\mathcal{T}}
 \newcommand{\X}{\mathcal{X}}
 \newcommand{\K}{\mathcal{K}}
 \newcommand{\R}{\mathcal{R}}
-\newcommand{\p}{\mathcal{P}}
 
+% Sets of numbers
 \newcommand{\Nat}{\mathbb{N}}
+\newcommand{\Real}{\mathbb{R}}
 
+% Domain-specific sets
 \newcommand{\BC}{\mathcal{BC}}
 \newcommand{\HH}{\mathcal{H}}
 \newcommand{\EQ}{\mathcal{E\hspace{-1pt}Q}}
 \newcommand{\Prob}{\mathcal{S}}
 
-\newcommand{\Pos}{\mathcal{P}\!os}
-\newcommand{\FPos}{\mathcal{FP\!}os}
-\newcommand{\Var}{\mathcal{V}\!ar}
+% Also a set, but typeset bold
+\newcommand{\Nonnil}{\mathbf{nonnil}}
 
+% Domain-specific types
 \newcommand{\Elt}{\mathrm{Elt}}
 \newcommand{\List}{\mathrm{List}}
 
+% Domain-specific function symbols
 \newcommand{\Bc}{\mathit{bc}}
 \newcommand{\Hh}{\mathit{h}}
 \newcommand{\Cons}{\mathit{cons}}
 \newcommand{\Nil}{\mathit{nil}}
 
-\newcommand{\Nonnil}{\mathbf{nonnil}}
+% These variables require special kerning, because math caligraphic font does
+% not kern intelligently.
+\newcommand{\Pos}{\mathcal{P}\!os}
+\newcommand{\FPos}{\mathcal{FP\!}os}
+\newcommand{\Var}{\mathcal{V}\!ar}
 
+% Indicate failure of an algorithm
 \newcommand{\Fail}{\mathrm{FAIL}}
 
+% The unificand pair constructor
 \newcommand{\ueq}{=_{}^?}
+
+% Function composition operator
 \newcommand{\compcirc}{\, {\scriptstyle{\circ}} \,}
 
 \DeclareMathOperator{\Gr}{\mathit{Gr}}
@@ -38,7 +50,6 @@
 \newcommand{\Inf}[1]{{\mathcal{I}_\mathrm{#1}}}
 \newcommand{\Reduced}[1]{#1 \negmedspace\downarrow}
 \newcommand{\Sub}[2]{{\left.{#1}\right|_{#2}^{}}}
-\newcommand{\V}[2]{V^{\hspace{0pt}#1}_{#2}}
 
 \newcommand{\Equiv}[2]{{[#1]}_{#2}}
 \newcommand{\Proj}[2]{\succ_{#1, #2}}

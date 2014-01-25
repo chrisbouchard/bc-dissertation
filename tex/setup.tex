@@ -1,25 +1,34 @@
+% Set the page size to UAlbany thesis requirements.
 \geometry{paper=letterpaper, margin=1in, bindingoffset=0.5in}
 
+% URLs should be typeset in the same font as the surrouding text.
 \urlstyle{same}
 
+% Rename the bibliography to references, and use a plain style.
 \renewcommand{\tocbibname}{\refname}
 \bibliographystyle{plainnat}
 
+% Dates are separated with -, not /
 \renewcommand{\dateseparator}{-}
 
+% A date format for Day Month Year style dates.
 \newdateformat{ddmmmyyyydate}{%
     \ifshowdow\dayofweekname{\THEDAY}{\THEMONTH}{\THEYEAR}\fi
     \THEDAY{} \monthname[\THEMONTH{}] \THEYEAR{}%
 }
 
+% Leave some space between the footnote marker and the footnote body.
 \makeatletter
 \long\def\@makefntext#1{%
     \parindent 1em\noindent\hb@xt@ 1.8em{\hss\@makefnmark}~#1%
 }
 \makeatother
 
+% Add support for an advisor to the titlepage.
 \newcommand{\theadvisor}{}
 \newcommand{\advisor}[1]{\renewcommand{\theadvisor}{#1}}
 
+% Allow inline listings in chapter and section titles, but give a hint to the
+% PDF viewer what the text should be.
 \newcommand{\TitleListing}[1]{\texorpdfstring{\lstinline|#1|}{#1}}
 
