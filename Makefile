@@ -9,5 +9,5 @@ Thesis.pdf : Thesis.tex Thesis.bib chapters.tex $(TEX_DEPS)
 	latexmk -g -pdf -dvi- -ps- $<
 
 chapters.tex : $(CHAPTER_DEPS)
-	@{ $(foreach file, $^, echo "\input{$(file)}";) } > $@
+	bin/gen-input-list.zsh $(CHAPTER_DIR) > $@
 
