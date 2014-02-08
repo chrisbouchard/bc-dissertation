@@ -1,20 +1,20 @@
-Introduction
+01 Introduction
     Motivation
     Contributions
-Notation & Preliminaries
+02 Notation & Preliminaries
     Term Rewriting
     Unification
     Standard Form & DAG-Solved Form
     Types
     Inference Rules
     Dependency Graphs
-Chaining
+03 Chaining
     Cipher Block Chaining
     BC Theory
     Element Theory H
     Inductive Theory
     Cancellativity and Semicancellativity
-Unification Modulo (BC U H)
+04 Unification Modulo (BC U H)
     Inference System INF_BC
     Nondeterminism
     Dependency Graph Transformations
@@ -23,25 +23,25 @@ Unification Modulo (BC U H)
     Termination
     Algorithm
     Runtime Analysis
-Modelling Cipher Block Chaining with BC
+05 Modelling Cipher Block Chaining with BC
     Example Attack
-Adding Decryption
+06 Adding Decryption
     "Original DBC" is Infinitary
     Patching Axioms to be Finitary
-Unification Modulo (DBC U H)
+07 Unification Modulo (DBC U H)
     Inference System INF_DBC
     Soundness
     Completeness
     Termination
     Algorithm
     Runtime Analysis
-Relaxing Conditions on H
+08 Relaxing Conditions on H
     Unifiability
     H Not Semicancellative
     H Not Subterm-Collapse-Free
     Undecidability of Checking Subterm-Collapse-Freeness (?)
-Implementation of (BC U H)-Unification
+09 Implementation of (BC U H)-Unification
     MAUDE
     Samples
-Conclusion
+10 Conclusion
 

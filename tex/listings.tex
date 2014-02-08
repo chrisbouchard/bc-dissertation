@@ -1,0 +1,29 @@
+% Default settings for listings
+\lstset{
+    basicstyle=\ttfamily,
+    moredelim=**[is][\itshape]{@/}{/@},
+    moredelim=**[is][\bfseries]{@@}{@@},
+    showstringspaces=false,
+}
+
+\lstdefinestyle{smalllisting}{
+    basicstyle=\footnotesize\ttfamily,
+}
+
+% Definition of Maude for lstlistings
+\lstdefinelanguage{Maude}{
+    alsoletter={\:},
+    morecomment=[l]{---},
+    morecomment=[l]{***},
+    morecomment=[n]{***(}{)},
+    morestring=[b]{"},
+    keywords={load, pr, protecting, sort, sorts, subsort, subsorts, including,
+              class, msg, msgs, endfm, fmod, is, mod, endm, omod, endom, view,
+              endv, from, to, TODO\:},
+    keywords=[2]{eq,  mb, ceq, if, rl, crl, else, then, fi},
+    keywords=[3]{ctor, assoc, comm, gather, id\:, label, metadata, owise, prec,
+                 special, ditto, format},
+    keywords=[4]{op, ops, var, vars},
+    keywords=[5]{=, =>, ->, ~>, ::},
+}
+

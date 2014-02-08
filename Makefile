@@ -1,13 +1,18 @@
-TEX_DIR := tex
-IMAGE_DIR := images
+TEX_DEPS := tex/abstract.tex tex/acknowledgements.tex tex/copyright.tex \
+    tex/notation.tex tex/packages.tex tex/setup.tex tex/titlepage.tex
+
+IMAGE_DEPS := img/logo_A2_pms124_269.eps
+
 CHAPTER_DIR := chapters
+CHAPTER_DEPS := $(wildcard $(CHAPTER_DIR)/*.tex)
 
-TEX_DEPS := $(wildcard tex/*)
-CHAPTER_DEPS := $(wildcard chapters/*)
+OUTPUT_DIR := output
 
-Thesis.pdf : Thesis.tex Thesis.bib chapters.tex $(TEX_DEPS)
-	latexmk -g -pdf -dvi- -ps- $<
+all : Thesis.pdf
 
-chapters.tex : $(CHAPTER_DEPS)
+chapters.tex : bin/gen-input-list.zsh $(CHAPTER_DEPS)
 	bin/gen-input-list.zsh $(CHAPTER_DIR) > $@
+
+Thesis.pdf : Thesis.tex Thesis.bib chapters.tex $(TEX_DEPS) $(IMAGE_DEPS)
+	latexmk -outdir=$(OUTPUT_DIR) -pdf -dvi- -ps- $<
 

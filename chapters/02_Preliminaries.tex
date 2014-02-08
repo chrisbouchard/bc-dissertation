@@ -1,2 +1,127 @@
 \chapter{Notation and Preliminaries}\label{chap:prelims}
 
+We assume the reader is familiar with the usual notations and concepts in term
+rewriting systems~\cite{Term} and equational unification~\cite{BaaderSnyd-01}.
+
+\section{Terms and Substitutions}\label{sec:terms-subs}
+
+We consider terms over a ranked signature, usually denoted $\Sigma$, and a
+possibly infinite set of variables, usually denoted $\X$. For a function symbol
+$f$ in $\Sigma$, we denote its arity by $\Arity(f)$. We denote by $T(\Sigma,
+\X)$ the set of all terms over $\Sigma$ and $\X$, and by $T(\Sigma)$ the set of
+ground terms, i.e., $T(\Sigma) = T(\Sigma, \varnothing)$. For a term $t$, we
+write $\Pos(t)$ for the set of positions in $t$, and $\FPos(t)$ for the set of
+nonvariable positions. We write $\Var(t)$ for the set of variables in $t$, and
+$\Sig(t)$ for the set of function symbols in $t$, also called the signature of
+$t$. The root symbol of $t$ is denoted $\Root(t)$.
+
+A function $\sigma$ on $T(\Sigma, \X)$ is a \emph{substitution} if it is an
+endomorphism over $T(\Sigma, \X)$ and $\sigma(t) = t$ for almost all terms $t$.
+We write $\Sub{\sigma}{V}$ for the restriction of $\sigma$ to domain $V$ such
+that $(\Sub{\sigma}{V})(x) = x$ for any variable $x$ not in $V$. Substitutions
+will often be given as a mapping of variables, e.g., $\{ x \mapsto a,\, y
+\mapsto b \}$. A function from variables to terms can be naturally extended to
+a substitution. We write $\Sig(\sigma)$ for the signature of a substitution
+$\sigma$.
+
+There is a partial order $\LessGeneralThan$ on terms given by $t_1
+\LessGeneralThan t_2$ if and only if $t_1 = \sigma(t_2)$ for some substitution
+$\sigma$. If $\sigma$ is important, this can be written as $t_1
+\LessGeneralThan[\sigma] t_2$. Here $t_1$ is said to be \emph{less general
+than}, or \emph{subsumed by}, $t_2$. There is a similar ordering for
+substitutions, where $\sigma_1 \LessGeneralThan \sigma_2$ if and only if
+$\sigma_1 = \theta \compcirc \sigma_2$ for some substitution $\theta$.
+
+\section{Equational Theories and Term Rewriting}\label{sec:eq-sys-term-rew}
+
+An \emph{equation} is an ordered pair of terms $(t_1, t_2)$, usually written as
+$t_1 \Equals{} t_2$. An \emph{equational theory} (or simply a theory) is a set
+of equations, which are called the \emph{axioms} of the theory. An equational
+theory $E$ induces an equivalence relation $\Equals{E}$ on terms such that $t_1
+\Equals{E} t_2$ if and only if $E \vdash t_1 \Equals{} t_2$. We denote by
+$\Sig(E)$ the signature of a theory $E$.
+
+A \emph{rewrite rule} is also an ordered pair of terms $(t_1, t_2)$, usually
+written as $t_1 \To{} t_2$. A \emph{term rewriting system} (or simply a rewrite
+sytem) is a set of rewrite rules. A rewrite system $R$ induces an equivalence
+relation $\Equals{R}$ on terms such that $t_1 \Equals{R} t_2$ if and only if
+$t_1 \ToFrom[*]{R} t_2$, where $\ToFrom[*]{R}$ is the reflexive, transitive,
+symmetric closure of $\To{R}$. There is also a relation $\JoinTo{R}$, where
+$t_1 \JoinTo{R} t_2$ if and only if there is a term $t'$ such that $t_1
+\To[*]{R} t' \From[*]{R} t_2$. Then $t_1$ and $t_2$ are said to be
+\emph{joinable} in $R$. We denote by $\Sig(R)$ the signature of a rewrite
+system $R$.
+
+A rewrite system $R$ is said to be \emph{terminating} if there are no infinite
+rewrite sequences, and said to be \emph{confluent} if for all terms $t$, $t_1$,
+and $t_2$ such that $t_1 \From[*]{R} t \To[*]{R} t_2$, then $t_1 \JoinTo{R}
+t_2$. A rewrite system that is both terminating and confluent is called
+\emph{convergent}. If $R$ is a convergent rewrite system, then every term $t$
+has a unique \emph{normal form} $\Reduced{t}$ such that $t \To[*]{R}
+\Reduced{t}$ and $\Reduced{t}$ is irreducible, and we write $t \To[!]{R}
+\Reduced{t}$. For a convergent rewrite system $R$, the relations $\JoinTo{R}$
+and $\Equals{R}$ are equivalent.
+
+\section{Unification}\label{sec:unification}
+
+Unification is the problem of solving equations with respect to a particular
+equivalence relation. Often, the equivalence relation given by an equational
+theory, in which case we refer to the problem as \emph{equational unification}.
+Given an theory $E$, an instance of the \emph{unification problem modulo $E$}
+(or the \emph{$E$-unification problem}) is a set of equations\footnote{The
+symbol $\ueq$ rather than $\Equals{}$ is customary to indicate that these are
+equations to be solved rather than axioms.} $\Prob = \{ s_1 \ueq t_1, \dotsc,
+s_n \ueq t_n \}$. A solution is a substitution $\sigma$ such that $\sigma(s_1)
+\Equals{E} \sigma(t_1) \; \wedge \; \dotsb \; \wedge \; \sigma(s_n) \Equals{E}
+\sigma(t_n)$. Such a solution is called an \emph{$E$-unifier} of $\Prob$, or
+simply a \emph{unifier} if the theory is clear from context.
+
+The $E$-unification problem comes in three flavors, with decreasing degrees of
+restriction on the signature of the input problem $\Prob$. First is
+\emph{elementary unification}, in which $\Sig(\Prob) \subseteq \Sig(E)$. Next
+is \emph{unification with constants}, where $\Sig(\Prob) \setminus \Sig(E)$
+consists only of constants. Last is \emph{general unification}, where no
+restrictions are placed on $\Sig(\Prob)$.
+
+\section{Standard Form and DAG-Solved Form}\label{sec:std-form}
+
+A unification problem $\Prob$ is said to be in \emph{standard form} if, for
+each equation $t_1 \ueq t_2$ in $\Prob$, $t_1$ is a variable, and $t_2$ is
+either a variable, a constant, or a term of the form $f(x_1, \dotsc, x_n)$. A
+unification problem $\Prob$ not in standard form can be decomposed to a problem
+$\Prob'$ that is in standard form and $|\Prob|$ is at most twice $|\Prob'|$.
+
+A problem $\Prob = \{ x_1 \ueq t_1, \dotsc, x_n \ueq t_n \}$ in standard form
+is in \emph{dag-solved form} if and only if both of the following conditions
+hold:
+
+\begin{enumerate}[(i)]
+    \item Each $x_i$ is unique, i.e., $x_i = x_j$ if and only if $i = j$.
+    \item If $i < j$, then $x_i$ does not occur in $t_j$.
+\end{enumerate}
+
+This second condition gives dag-solved form its name, since the equations can
+be thought to form an acyclic graph. One unifier for such a problem in
+dag-solved form is
+\[\sigma = \{ x_n \mapsto t_n \} \compcirc \dotsb \compcirc \{ x_1 \mapsto t_1 \}\]
+
+\section{Dependency Graphs}\label{sec:dep-graphs}
+
+For a unification problem $\Prob$ in standard form, the \emph{dependency graph}
+of $\Prob$, written $\DepGraph(\Prob)$, is a labelled directed graph whose
+nodes are variables in $\Var(\Prob)$ and whose edges are labelled by pairs from
+$\Sig(\Prob) \times \Nat$.  For each equation $x \ueq f(y_1, \dotsc, y_n)$ in
+$\Prob$, there is an edge from $x$ to each $y_i$ labelled $(f, i)$.
+
+\section{Many-Sorted Signatures}\label{sec:types}
+
+The theories we will be considering have types associated with them. Each
+symbol's arity, rather than being simply a number, is a type signature, i.e.,
+$\Arity(f) = \tau_1 \times \dotsb \times \tau_n \to \tau'$. We assume that
+$T(\Sigma, \X)$ only contains well-typed terms. There is a type relation such
+that $t : \tau$ if and only if $\Arity(\Root(t))$ has domain $\tau$. Variables
+can be annotated by types, where a variable $x {:} \tau$ can only be
+instantiated with a term of type $\tau$.
+
+\section{Inference Rules}\label{sec:inf-rules}
+

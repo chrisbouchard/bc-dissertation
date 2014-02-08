@@ -12,6 +12,7 @@
 
 % Domain-specific sets
 \newcommand{\BC}{\mathcal{BC}}
+\newcommand{\DBC}{\mathcal{DBC}}
 \newcommand{\HH}{\mathcal{H}}
 \newcommand{\EQ}{\mathcal{E\hspace{-1pt}Q}}
 \newcommand{\Prob}{\mathcal{S}}
@@ -31,31 +32,47 @@
 
 % These variables require special kerning, because math caligraphic font does
 % not kern intelligently.
-\newcommand{\Pos}{\mathcal{P}\!os}
-\newcommand{\FPos}{\mathcal{FP\!}os}
-\newcommand{\Var}{\mathcal{V}\!ar}
+\newcommand{\Pos}{\mathcal{P}\!\mathit{os}}
+\newcommand{\FPos}{\mathcal{FP\!}\mathit{os}}
+\newcommand{\Var}{\mathcal{V}\!\mathit{ar}}
+\newcommand{\Sig}{\mathcal{S}\hspace{-1pt}\mathit{ig}}
+
+\newcommand{\Arity}{\mathrm{arity}}
+\newcommand{\Root}{\mathrm{root}}
 
 % Indicate failure of an algorithm
 \newcommand{\Fail}{\mathrm{FAIL}}
 
+% The identity function
+\newcommand{\Ident}{\mathrm{id}}
+
 % The unificand pair constructor
 \newcommand{\ueq}{=_{}^?}
 
+% Relations for theories and rewrite systems
+\newcommand{\To}[2][]{\to^{#1}_{#2}}
+\newcommand{\From}[2][]{\leftarrow^{#1}_{#2}}
+\newcommand{\ToFrom}[2][]{\leftrightarrow^{#1}_{#2}}
+\newcommand{\JoinTo}[1]{\downarrow^{}_{#1}}
+\newcommand{\Equals}[2][]{\approx^{#1}_{#2}}
+
+\newcommand{\LessGeneralThan}[1][]{\sqsubseteq_{#1}}
+\newcommand{\MoreGeneralThan}[1][]{\sqsupseteq_{#1}}
+
 % Function composition operator
-\newcommand{\compcirc}{\, {\scriptstyle{\circ}} \,}
+\newcommand{\compcirc}{\circ}
 
 \DeclareMathOperator{\Gr}{\mathit{Gr}}
 \DeclareMathOperator{\Mgu}{\mathit{mgu}}
 
-\newcommand{\Inf}[1]{{\mathcal{I}_\mathrm{#1}}}
-\newcommand{\Reduced}[1]{#1 \negmedspace\downarrow}
+\newcommand{\Reduced}[2][]{#2 \negmedspace\downarrow^{}_{#1}}
 \newcommand{\Sub}[2]{{\left.{#1}\right|_{#2}^{}}}
+
+\newcommand{\Inf}[1]{{\mathcal{I}_{#1}}}
 
 \newcommand{\Equiv}[2]{{[#1]}_{#2}}
 \newcommand{\Proj}[2]{\succ_{#1, #2}}
 \newcommand{\ProjEq}[2]{\sim_{#1, #2}}
-
-\newcommand{\Root}{\mathrm{root}}
 
 \newcommand{\AddFn}{{+}}
 \newcommand{\MultFn}{{\times}}
