@@ -7,22 +7,23 @@ rewriting systems~\cite{Term} and equational unification~\cite{BaaderSnyd-01}.
 
 We consider terms over a ranked signature, usually denoted $\Sigma$, and a
 possibly infinite set of variables, usually denoted $\X$. For a function symbol
-$f$ in $\Sigma$, we denote its arity by $\Arity(f)$. We denote by $T(\Sigma,
-\X)$ the set of all terms over $\Sigma$ and $\X$, and by $T(\Sigma)$ the set of
-ground terms, i.e., $T(\Sigma) = T(\Sigma, \varnothing)$. For a term $t$, we
-write $\Pos(t)$ for the set of positions in $t$, and $\FPos(t)$ for the set of
-nonvariable positions. We write $\Var(t)$ for the set of variables in $t$, and
-$\Sig(t)$ for the set of function symbols in $t$, also called the signature of
-$t$. The root symbol of $t$ is denoted $\Root(t)$.
+$f$ in $\Sigma$, we denote its arity by $\Arity(f)$. We denote by
+$\Terms(\Sigma, \X)$ the set of all terms over $\Sigma$ and $\X$, and by
+$\Terms(\Sigma)$ the set of ground terms, i.e., $\Terms(\Sigma) =
+\Terms(\Sigma, \varnothing)$. For a term $t$, we write $\Pos(t)$ for the set of
+positions in $t$, and $\FPos(t)$ for the set of nonvariable positions. We write
+$\Var(t)$ for the set of variables in $t$, and $\Sig(t)$ for the set of
+function symbols in $t$, also called the signature of $t$. The root symbol of
+$t$ is denoted $\Root(t)$.
 
-A function $\sigma$ on $T(\Sigma, \X)$ is a \emph{substitution} if it is an
-endomorphism over $T(\Sigma, \X)$ and $\sigma(t) = t$ for almost all terms $t$.
-We write $\Sub{\sigma}{V}$ for the restriction of $\sigma$ to domain $V$ such
-that $(\Sub{\sigma}{V})(x) = x$ for any variable $x$ not in $V$. Substitutions
-will often be given as a mapping of variables, e.g., $\{ x \mapsto a,\, y
-\mapsto b \}$. A function from variables to terms can be naturally extended to
-a substitution. We write $\Sig(\sigma)$ for the signature of a substitution
-$\sigma$.
+A function $\sigma$ on $\Terms(\Sigma, \X)$ is a \emph{substitution} if it is
+an endomorphism over $\Terms(\Sigma, \X)$ and $\sigma(t) = t$ for almost all
+terms $t$. We write $\Sub{\sigma}{V}$ for the restriction of $\sigma$ to domain
+$V$ such that $(\Sub{\sigma}{V})(x) = x$ for any variable $x$ not in $V$.
+Substitutions will often be given as a mapping of variables, e.g., $\{ x
+\mapsto a,\, y \mapsto b \}$. A function from variables to terms can be
+naturally extended to a substitution. We write $\Sig(\sigma)$ for the signature
+of a substitution $\sigma$.
 
 There is a partial order $\LessGeneralThan$ on terms given by $t_1
 \LessGeneralThan t_2$ if and only if $t_1 = \sigma(t_2)$ for some substitution
@@ -80,8 +81,13 @@ The $E$-unification problem comes in three flavors, with decreasing degrees of
 restriction on the signature of the input problem $\Prob$. First is
 \emph{elementary unification}, in which $\Sig(\Prob) \subseteq \Sig(E)$. Next
 is \emph{unification with constants}, where $\Sig(\Prob) \setminus \Sig(E)$
-consists only of constants. Last is \emph{general unification}, where no
+contains only constants. Last is \emph{general unification}, where no
 restrictions are placed on $\Sig(\Prob)$.
+
+If every instance of the $E$-unification problem has at most one solution, the
+$E$-unification problem is said to be \emph{unitary}. If there are at most a
+finite number of solutions, it is said to be \emph{finitary}. Otherwise the
+problem is said to be \emph{infinitary}.
 
 \section{Standard Form and DAG-Solved Form}\label{sec:std-form}
 
@@ -101,9 +107,10 @@ hold:
 \end{enumerate}
 
 This second condition gives dag-solved form its name, since the equations can
-be thought to form an acyclic graph. One unifier for such a problem in
-dag-solved form is
+be thought to form an acyclic graph. For such a problem in
+dag-solved form, the substitution
 \[\sigma = \{ x_n \mapsto t_n \} \compcirc \dotsb \compcirc \{ x_1 \mapsto t_1 \}\]
+is always a solution.
 
 \section{Dependency Graphs}\label{sec:dep-graphs}
 
@@ -113,15 +120,18 @@ nodes are variables in $\Var(\Prob)$ and whose edges are labelled by pairs from
 $\Sig(\Prob) \times \Nat$.  For each equation $x \ueq f(y_1, \dotsc, y_n)$ in
 $\Prob$, there is an edge from $x$ to each $y_i$ labelled $(f, i)$.
 
-\section{Many-Sorted Signatures}\label{sec:types}
+\section{Many-Sorted Signatures}\label{sec:sorts}
 
-The theories we will be considering have types associated with them. Each
-symbol's arity, rather than being simply a number, is a type signature, i.e.,
-$\Arity(f) = \tau_1 \times \dotsb \times \tau_n \to \tau'$. We assume that
-$T(\Sigma, \X)$ only contains well-typed terms. There is a type relation such
-that $t : \tau$ if and only if $\Arity(\Root(t))$ has domain $\tau$. Variables
-can be annotated by types, where a variable $x {:} \tau$ can only be
-instantiated with a term of type $\tau$.
+We will be considering many-sorted signatures over a set of sorts $\Sorts$.
+Each symbol's arity, rather than being simply a number, is a type signature
+composed of sorts from $\Sorts$ --- e.g., $\Arity(f) = s_1 \times \dotsb \times
+s_n \to s'$. We assume that $\X$ is partitioned by sort such that $\X =
+\biguplus_{s \in \Sorts} \X_{s}$ and variables in $\X_{s}$ can only be
+instantiated by terms of sort $s$. We further assume that $\Terms(\Sigma, \X)$
+only contains well-typed terms. There is a sort relation such that $t : s$ if
+and only if $\Arity(\Root(t))$ has range $s$. Variables are annotated by sorts,
+where variable $x {:} s \in \X_s$ can only be instantiated with a term of sort
+$s$.
 
 \section{Inference Rules}\label{sec:inf-rules}
 
