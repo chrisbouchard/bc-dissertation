@@ -2,6 +2,56 @@
 
 \section{Inference System \texorpdfstring{$\Inf{\BC}$}{IBC}}\label{sec:inf-bc}
 
+\begin{itemize}[align=left, font=\bfseries]
+    \item \InfRuleLabel{var-elim}{Variable Elimination}
+        \[\CondInfRule
+            {       \EQ  }{ U \ueq V }
+            { [V/U](\EQ) }{ U \ueq V }
+            { if $U$ occurs in $\EQ$ }
+        \]
+
+    \item \InfRuleLabel{cancel-cons}{Cancel{}lation on $\Cons$}
+        \[\InfRule
+            { \EQ }{ U \ueq cons(v, W), \; U \ueq cons(x, Y) }
+            {     }{ U \ueq cons(v, W), \; x \ueq v, \; Y \ueq W }
+        \]
+
+    \item \InfRuleLabel{nil-soln-1}{Nil Solution 1}
+        \[\InfRule
+            { \EQ }{ U \ueq bc(V, w), \; U \ueq nil }
+            {     }{ U \ueq nil, \; V \ueq nil }
+        \]
+
+    \item \InfRuleLabel{nil-soln-2}{Nil Solution 2}
+        \[\InfRule
+            { \EQ }{ U \ueq bc(V, w), \; V \ueq nil }
+            {     }{ U \ueq nil, \; V \ueq nil }
+        \]
+
+    \item \InfRuleLabel{nil-soln-3}{Nil Solution 3}
+        \[\CondInfRule
+            { \EQ }{ U \ueq bc(V, w) }
+            {     }{ U \ueq nil, \; V \ueq nil }
+            {$\mathrm{if} ~ V >_{bc}^{+} U $}
+        \]
+
+    \item \InfRuleLabel{semi-cancel-bc}{Semi-Cancel{}lation on $\Bc$, at a $\Bc/\Bc$-peak}
+        \[\InfRule
+            { \EQ }{ U \ueq bc(V, w), \; U \ueq bc(X, w) }
+            { \EQ }{ U \ueq bc(V, w), \; W \ueq V }
+        \]
+
+    \item \InfRuleLabel{push-bc-below}{Push $\Bc$ below $\Cons$, at a $\Nonnil$ $\Bc/\Bc$-peak}
+        \[\CondInfRule
+            { \EQ }{ U \ueq bc(V, w), \; U \ueq bc(X, y) }
+            { \EQ }{      V \ueq cons(v', Z), \; X \ueq cons(x', Z), \;
+                          U \ueq cons(u', U''),
+                      \\& U'' \ueq bc(Z, u'), \; u' \ueq h(v', w), \;
+                          u' \ueq h(x', y) }
+            { if $U \in \Nonnil$ }
+        \]
+\end{itemize}
+
 \section{Nondeterminism}\label{sec:nondet}
 
 \section{Dependency Graph Transformations}\label{sec:dep-graph-trans}
