@@ -56,8 +56,121 @@ the function is XOR. In later sections, we will use block chaining as a
 motivating example of studying chaining in general.
 
 \section{\texorpdfstring{$\BC$}{BC} Theory}\label{sec:bc-theory}
+To study the chaining operation, we will create an equational theory $\BC$ such
+that chaining is a model. Our theory will have two sorts, $\Elt$ and $\List$, and
+the following signature:
+\begin{align*}
+    \Bc &\colon \Elt \times \List \to \List &
+    \Cons &\colon \Elt \times \List \to \List \\
+    \Ff &\colon \Elt \times \Elt \to \Elt &
+    \Nil &\colon \List
+\end{align*}
 
-\section{Element Theory \texorpdfstring{$\HH$}{H}}\label{sec:elt-theory}
+Here $\Bc$ is our chaining operator (\textbf{b}lock \textbf{c}hain), $\Ff$ is
+the fixed function to be chained, and $\Cons$ and $\Nil$ are the standard list
+constructors. We define $\BC$ to have the following two axioms:
+\begin{align*}
+    \Bc(\Ve{x}, \Nil) &\Equals{} \Nil \\
+    \Bc(\Ve{x}, \Cons(\Ve{y}, \Vl{z}))
+    &\Equals{} \Cons(\Ff(\Ve{y}, \Ve{x}), \Bc(\Ff(\Ve{y}, \Ve{x}), \Vl{z}))
+\end{align*}
+We can orient these rules from left to right to create a rewrite system
+$R_\BC$:
+\begin{align*}
+    \Bc(\Ve{x}, \Nil) &\To{} \Nil \\
+    \Bc(\Ve{x}, \Cons(\Ve{y}, \Vl{z}))
+    &\To{} \Cons(\Ff(\Ve{y}, \Ve{x}), \Bc(\Ff(\Ve{y}, \Ve{x}), \Vl{z}))
+\end{align*}
+
+\begin{Lemma}
+    The rewrite system $R_\BC$ is convergent.
+\end{Lemma}
+\begin{proof}
+    It is straightforward that $R_\BC$ is confluent, because there are no
+    critical pairs ($\Cons$ and $\Nil$ clash). To prove $R_\BC$ terminating,
+    note that all terms have finite size and depth. The first rule removes an
+    occurrence of $\Bc$ with each application and must terminate. The second
+    preserves the size of the term, but increases the depth of an occurrence of
+    $\Bc$. Eventually all occurrences of $\Bc$ will be lower than the
+    occurrences of $\Cons$, so the rule must terminate. So $R_\BC$ is
+    terminating and thus it is confluent.
+\end{proof}
+
+\section{Element Theory \texorpdfstring{$\FF$}{F}}\label{sec:elt-theory}
+
+Since the original chaining operation is a higher-order function, we would like
+some way to make $\Ff$ behave like different functions. We do this using an
+equational theory $\FF$ called the \emph{element theory}. This theory defines
+the function symbol $\Ff\colon \Elt \times \Elt \to \Elt$. A theory $\FF$ must
+satisfy three conditions to be an element theory:
+\begin{enumerate}[(i)]
+    \item $\FF$ and $\BC$ are \emph{disjoint except for $\Ff$}, i.e.,
+        $\Sig(\FF) \, \cap \, \Sig(\BC) \subseteq \{ \Ff \}$.
+    \item $\FF$ is \emph{subterm-collapse-free in $\Ff$}, i.e., there is no
+        term $t$ such that $\Root(t) = \Ff$ and $t \Equals{\FF} \Sub{t}{p}$ for
+        $p \neq \Empty$.
+    \item $\Ff$ is \emph{semicancellative}, i.e., if $\Ff(t_1, t_2)
+        \Equals{\FF} \Ff(t_3, t_4)$, then $t_1 \Equals{\FF} t_3 \, \Iff \, t_2
+        \Equals{\FF} t_4$.
+\end{enumerate}
+Note that the first condition does not preclude $\FF$ from using function
+symbols in addition to $\Ff$. It just says those symbols cannot be $\Bc$,
+$\Cons$, or $\Nil$.
+
+\begin{Lemma}
+    The trivial theory $\varnothing$ is an element theory.
+\end{Lemma}
+\begin{proof}
+    The first condition is vacuously true, since the trivial theory has no
+    signature. For the remaining conditions, recall that $t_1
+    \Equals{\varnothing} t_2$ if and only if $t_1 = t_2$. Thus the second
+    condition holds because a term cannot be identically equal to a proper
+    subterm of itself. The third condition holds because if $\Ff(t_1, t_2)
+    \Equals{\FF} \Ff(t_3, t_4)$, then by decomposition $t_1 \Equals{\FF} t_3$
+    and $t_2 \Equals{\FF} t_4$.
+\end{proof}
+
+Let $E_\oplus$ be an equational theory with $\Sig(E_\oplus) = \{ \oplus, 0 \}$
+that is equivalent to the following equational theory:
+\begin{align*}
+    x \oplus x &\Equals{} 0 \\
+    x \oplus 0 &\Equals{} x \\
+    x \oplus y &\Equals{} y \oplus x \\
+    (x \oplus y) \oplus z &\Equals{} x \oplus (y \oplus z)
+    \intertext{One model for $E_\oplus$ is bits under exclusive OR. Now let
+    $\FF_\oplus$ be $E_\oplus$ with the following additional axiom:}
+    \Ff(x, y) &\Equals{} e(x \oplus y)
+\end{align*}
+
+\begin{Lemma}
+    The theory $\FF_\oplus$ is an element theory.
+\end{Lemma}
+\begin{proof}
+    The first condition clearly holds, since $\Sig(\FF_\oplus) = \{ e, \Ff,
+    \oplus, 0 \}$. For the second condition, note that every $\Ff$-rooted
+    term is $\FF_\oplus$-equivalent to an $e$-rooted term, and $e$ is unintereted.
+
+    To prove the third condition, consider terms $t_1$, $t_2$, $t_3$ and $t_4$
+    such that
+    \[\Ff(t_1, t_2) \Equals{\FF_\oplus} \Ff(t_3, t_4)\]
+    % Suppose $\Ff$ is not semi-cancellative. Without loss
+    % of generality, assume $t_1 \Equals{\FF_\oplus} t_3$ but $t_2 \not\Equals{\FF_\oplus} t_4$.
+    Since $\Ff(t_1, t_2) \Equals{\FF_\oplus} e(t_1 \oplus t_2)$ and $\Ff(t_3,
+    t_4) \Equals{\FF_\oplus} e(t_3 \oplus t_4)$, and since $e$ is an uninterpreted
+    function symbol, we have that
+    \[t_1 \oplus t_2 \Equals{\FF_\oplus} t_3 \oplus t_4\]
+    There are then three possibilities for the terms:
+    \begin{enumerate}[(i)]
+        \item $t_1 \Equals{\FF_\oplus} t_3$ and $t_2 \Equals{\FF_\oplus} t_4$
+        \item $t_1 \Equals{\FF_\oplus} t_2$ and $t_3 \Equals{\FF_\oplus} t_4$
+        \item $t_1 \Equals{\FF_\oplus} t_4$ and $t_2 \Equals{\FF_\oplus} t_3$
+    \end{enumerate}
+    Suppose, without loss of generality, that $t_1 \Equals{\FF_\oplus} t_3$. In the
+    first case, we have immediately that $t_2 \Equals{\FF_\oplus} t_4$. In the
+    second and third cases, by transitivity of $\Equals{\FF_\oplus}$, we find that
+    \[t_1 \Equals{\FF_\oplus} t_2 \Equals{\FF_\oplus} t_3 \Equals{\FF_\oplus} t_4 \]
+    and thus $t_2 \Equals{\FF_\oplus} t_4$.
+\end{proof}
 
 \section{Inductive Theory}\label{sec:inductive-theory}
 

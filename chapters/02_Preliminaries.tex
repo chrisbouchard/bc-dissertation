@@ -130,8 +130,13 @@ s_n \to s'$. We assume that $\X$ is partitioned by sort such that $\X =
 instantiated by terms of sort $s$. We further assume that $\Terms(\Sigma, \X)$
 only contains well-typed terms. There is a sort relation such that $t : s$ if
 and only if $\Arity(\Root(t))$ has range $s$. Variables are annotated by sorts,
-where variable $x {:} s \in \X_s$ can only be instantiated with a term of sort
+where variable $\V{x}{s} \in \X_s$ can only be instantiated with a term of sort
 $s$.
+
+As a notational short-hand for the sorts we study in this paper, any variable
+without a sort annotation is assumed to have sort $\Elt$. So $\Ve{x}$ and
+$\V{x}{\Elt}$ are the same. For variables of sort $\List$, we will place a bar
+over the variable. Thus $\Vl{y}$ and $\V{y}{\List}$ are the same.
 
 \section{Inference Rules}\label{sec:inf-rules}
 

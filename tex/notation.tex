@@ -10,10 +10,13 @@
 \newcommand{\Nat}{\mathbb{N}}
 \newcommand{\Real}{\mathbb{R}}
 
+\newcommand{\Empty}{\epsilon}
+
 % Domain-specific sets
 \newcommand{\BC}{\mathcal{BC}}
 \newcommand{\DBC}{\mathcal{DBC}}
-\newcommand{\HH}{\mathcal{H}}
+\newcommand{\XOR}{\mathcal{XOR}}
+\newcommand{\FF}{\mathcal{F}}
 \newcommand{\EQ}{\mathcal{E\hspace{-1pt}Q}}
 \newcommand{\Prob}{\mathcal{P}}
 
@@ -21,12 +24,12 @@
 \newcommand{\Nonnil}{\mathbf{nonnil}}
 
 % Domain-specific types
-\newcommand{\Elt}{\mathrm{elt}}
-\newcommand{\List}{\mathrm{list}}
+\newcommand{\Elt}{\mathrm{Elt}}
+\newcommand{\List}{\mathrm{List}}
 
 % Domain-specific function symbols
 \newcommand{\Bc}{\mathit{bc}}
-\newcommand{\Hh}{\mathit{h}}
+\newcommand{\Ff}{\mathit{f}}
 \newcommand{\Cons}{\mathit{cons}}
 \newcommand{\Nil}{\mathit{nil}}
 
@@ -52,7 +55,7 @@
 \newcommand{\Ident}{\mathrm{id}}
 
 % The unificand pair constructor
-\newcommand{\ueq}{=_{}^?}
+\newcommand{\ueq}[1][]{=_{#1}^?}
 
 % Relations for theories and rewrite systems
 \newcommand{\To}[2][]{\to^{#1}_{#2}}
@@ -99,4 +102,10 @@
 \newcommand{\IInfSplit}{\text{\textsf{Inf-Split}}}
 
 \newcommand{\Oper}[1]{\lstinline|#1|}
+
+\newcommand{\V}[2]{\mathit{#1}\ifstrempty{#2}{}{{:} {#2}}}
+\newcommand{\Ve}[1]{\mathit{#1}}
+\newcommand{\Vl}[1]{\bar{\mathit{#1}}}
+
+\newcommand{\Iff}{\Leftrightarrow}
 
