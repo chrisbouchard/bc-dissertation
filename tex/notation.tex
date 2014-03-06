@@ -1,5 +1,6 @@
 % Some common one-letter variables
 \newcommand{\A}{\mathcal{A}}
+\newcommand{\C}{\mathcal{C}}
 \newcommand{\E}{\mathcal{E}}
 \newcommand{\T}{\mathcal{T}}
 \newcommand{\X}{\mathcal{X}}
@@ -12,13 +13,17 @@
 
 \newcommand{\Empty}{\epsilon}
 
+\newcommand{\mathcalorpdfstring}[1]{\texorpdfstring{\mathcal{#1}}{#1}}
+
 % Domain-specific sets
-\newcommand{\BC}{\mathcal{BC}}
-\newcommand{\DBC}{\mathcal{DBC}}
-\newcommand{\XOR}{\mathcal{XOR}}
-\newcommand{\FF}{\mathcal{F}}
-\newcommand{\EQ}{\mathcal{E\hspace{-1pt}Q}}
-\newcommand{\Prob}{\mathcal{P}}
+\newcommand{\BC}{\mathcalorpdfstring{BC}}
+\newcommand{\DBC}{\mathcalorpdfstring{DBC}}
+\newcommand{\XOR}{\mathcalorpdfstring{XOR}}
+\newcommand{\FF}{\mathcalorpdfstring{F}}
+\newcommand{\EQ}{\mathcalorpdfstring{E\hspace{-1pt}Q}}
+\newcommand{\Prob}{\mathcalorpdfstring{P}}
+
+\newcommand{\BCUF}{\BC{} \texorpdfstring{\cup}{U} \FF}
 
 % Also a set, but typeset bold
 \newcommand{\Nonnil}{\mathbf{nonnil}}
@@ -26,6 +31,8 @@
 % Domain-specific types
 \newcommand{\Elt}{\mathrm{Elt}}
 \newcommand{\List}{\mathrm{List}}
+
+\newcommand{\ProbType}{\mathrm{Problem}}
 
 % Domain-specific function symbols
 \newcommand{\Bc}{\mathit{bc}}
@@ -47,6 +54,7 @@
 
 \newcommand{\Arity}{\mathit{arity}}
 \newcommand{\Root}{\mathit{root}}
+\newcommand{\ConsDepth}{\textit{$\Cons$-depth}}
 
 % Indicate failure of an algorithm
 \newcommand{\Fail}{\mathrm{FAIL}}
@@ -55,7 +63,7 @@
 \newcommand{\Ident}{\mathrm{id}}
 
 % The unificand pair constructor
-\newcommand{\ueq}[1][]{=_{#1}^?}
+\newcommand{\ueq}[1][]{=_{#1}^?\hspace{-1.5pt}}
 
 % Relations for theories and rewrite systems
 \newcommand{\To}[2][]{\to^{#1}_{#2}}
@@ -64,11 +72,15 @@
 \newcommand{\JoinTo}[1]{\downarrow^{}_{#1}}
 \newcommand{\Equals}[2][]{\approx^{#1}_{#2}}
 
+\newcommand{\InfTo}[2][]{\Rightarrow^{#1}_{#2}}
+\newcommand{\InfFrom}[2][]{\Leftarrow^{#1}_{#2}}
+\newcommand{\InfToFrom}[2][]{\Leftrightarrow^{#1}_{#2}}
+
 \newcommand{\LessGeneralThan}[1][]{\sqsubseteq_{#1}}
 \newcommand{\MoreGeneralThan}[1][]{\sqsupseteq_{#1}}
 
 % Function composition operator
-\newcommand{\compcirc}{\circ}
+\newcommand{\Compose}{\circ}
 
 \DeclareMathOperator{\Gr}{\mathit{Gr}}
 \DeclareMathOperator{\Mgu}{\mathit{mgu}}
@@ -76,11 +88,23 @@
 \newcommand{\Reduced}[2][]{#2 \negmedspace\downarrow^{}_{#1}}
 \newcommand{\Sub}[2]{{\left.{#1}\right|_{#2}^{}}}
 
-\newcommand{\Inf}[1]{{\mathcal{I}_{#1}}}
+\newcommand{\Gt}[2][]{>_{#2}^{#1}}
+\newcommand{\Lt}[2][]{<_{#2}^{#1}}
+\newcommand{\GtEq}[2][]{\geq_{#2}^{#1}}
+\newcommand{\LtEq}[2][]{\leq_{#2}^{#1}}
+\newcommand{\Sym}[2][]{\sim_{#2}^{#1}}
+\newcommand{\EqClass}[2]{{[#1]}_{#2}}
 
-\newcommand{\Equiv}[2]{{[#1]}_{#2}}
-\newcommand{\Proj}[2]{\succ_{#1, #2}}
-\newcommand{\ProjEq}[2]{\sim_{#1, #2}}
+\newcommand{\GTo}[2][]{\rhd_{#2}^{#1}}
+\newcommand{\GFrom}[2][]{\lhd_{#2}^{#1}}
+
+\newcommand{\LtCons}[1][]{\Lt[#1]{\Cons}}
+\newcommand{\GtCons}[1][]{\Gt[#1]{\Cons}}
+
+\newcommand{\BetaEqC}[1]{\EqClass{#1}{\beta}}
+
+\newcommand{\Len}{\mathrm{len}}
+\newcommand{\EqLabel}{\mathrm{eq}}
 
 \newcommand{\AddFn}{{+}}
 \newcommand{\MultFn}{{\times}}
@@ -94,27 +118,29 @@
 \newcommand{\DepGraph}{\SubDep{\Graph}}
 \newcommand{\PropGraph}{\SubProp{\Graph}}
 
-\newcommand{\Rule}[1]{\textsf{#1}}
-
 \newcommand{\Oper}[1]{\lstinline|#1|}
 
 \newcommand{\V}[2]{\mathit{#1}\ifstrempty{#2}{}{{:} {#2}}}
-\newcommand{\Ve}[1]{\mathit{#1}}
-\newcommand{\Vl}[1]{\bar{\mathit{#1}}}
+\newcommand{\Ve}[1]{\mathit{\dot{#1}}}
+\newcommand{\Vl}[1]{\vec{\mathit{#1}}}
 
 \newcommand{\Iff}{\Leftrightarrow}
 
-\newcommand{\InfRuleLabel}[2]{\Rule{#1}: \emph{#2}:}
+\newcommand{\INF}[1]{\texorpdfstring{\mathcal{I}_{#1}}{I#1}}
 
-\newcommand{\CondInfRule}[5]{%
+\newcommand{\Inf}[1]{\text{\textsf{#1}}}
+
+\newcommand{\InfLabel}[2]{\label{inf:#1} \emph{#2}:}
+
+\newcommand{\CondInfDef}[5]{%
     \infer[\ifblank{#5}{}{\quad \text{#5}}]%
-          {\;\begin{aligned}%
-              \ifblank{#3}{#1}{#3} ~ \cup ~ \{ & #4 \}%
-          \end{aligned}\;}%
-          {\;\begin{aligned}%
-              #1 ~ \uplus ~ \{ & #2 \}%
-          \end{aligned}\;}%
+          {\; #3 \ifblank{#4}{}{ ~ \cup ~ \{\hspace{-3.5pt}%
+              \begin{array}[t]{l}#4 \, \}\end{array}}%
+          \;}%
+          {\; #1 \ifblank{#2}{}{ ~ \uplus ~ \{\hspace{-3.5pt}%
+              \begin{array}[t]{l}#2 \, \}\end{array}}%
+          \;}%
 }
 
-\newcommand{\InfRule}[4]{\CondInfRule{#1}{#2}{#3}{#4}{}}
+\newcommand{\InfDef}[4]{\CondInfDef{#1}{#2}{#3}{#4}{}}
 

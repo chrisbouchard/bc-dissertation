@@ -1,60 +1,471 @@
-\chapter{Unification Modulo \texorpdfstring{$(\BC \cup \FF)$}{(BC U F)}}\label{chap:unif-bcuh}
+\chapter{Unification Modulo $(\BCUF)$}\label{chap:unif-bcuh}
 
-\section{Inference System \texorpdfstring{$\Inf{\BC}$}{IBC}}\label{sec:inf-bc}
+In this chapter we study the unification problem modulo $(\BCUF)$, where $\FF$
+is an element theory. We present an algorithm for solving this problem, and
+show that this algorithm is sound, complete, and terminating. In doing so show
+that the unification problem modulo $(\BCUF)$ is finitary.
 
-\begin{itemize}[align=left, font=\bfseries]
-    \item \InfRuleLabel{var-elim}{Variable Elimination}
-        \[\CondInfRule
-            {       \EQ  }{ U \ueq V }
-            { [V/U](\EQ) }{ U \ueq V }
-            { if $U$ occurs in $\EQ$ }
+\section{$\BC$-Dependency Graph}
+
+Recall that for a unification problem $\Prob$, we can define the dependency
+graph $\DepGraph(\Prob)$ whose nodes are the variables in $\Prob$ and whose
+edges are defined by the equations of $\Prob$. When $\Prob$ is a
+$(\BCUF)$-unification problem, we define several relations on the variables
+of $\Prob$.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Vl{u}$ and
+    $\Vl{v}$ be variables in $\Var(\Prob)$. Then we define the following
+    relations on the list variables of $\Prob$:
+    \begin{enumerate}[(i)]
+        \item $\Vl{u} \Gt{\Cons} \Vl{v}$ if and only if there is an edge from
+            $\Vl{u}$ to $\Vl{v}$ in $\DepGraph(\Prob)$ labelled $(\Cons, 2)$.
+
+        \item $\Vl{u} \Gt{\Bc} \Vl{v}$ if and only if there is an edge from
+            $\Vl{u}$ to $\Vl{v}$ in $\DepGraph(\Prob)$ labelled $(\Bc, 2)$.
+
+        \item ${\Sym{\Bc}} := {\Gt{\Bc}} \cup {\Lt{\Bc}}$
+    \end{enumerate}
+\end{Definition}
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We define the following
+    relation on the list variables of $\Prob$:
+    \[ {\Gt{\Len}} := {\Sym[*]{\Bc}} \Compose {\Gt{\Cons}} \Compose
+       {({\Gt{\Cons}} \cup {\Sym{\Bc}})^*} \]
+    In other words, if $\Vl{u}$ and $\Vl{v}$ are variables in $\Var(\Prob)$,
+    then $\Vl{u} \Gt{\Len} \Vl{v}$ if and only if $\Vl{u}$ is ``strictly longer
+    than'' $\Vl{v}$.
+\end{Definition}
+
+\section{The $\Nonnil$ Set}
+
+Some of the inferences in our algorithm depend on knowing if a variable could
+be assigned $\Nil$ in a solution or not. Given a unification problem $\Prob$,
+we compute a set $\Nonnil$ of variables that cannot be assigned $\Nil$ in
+\emph{any} unifier of $\Prob$.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We define the set $\Nonnil$
+    to be the smallest subset of $\Var(\Prob)$ such that, for any list variables
+    $\Vl{u}$ and $\Vl{v}$:
+    \begin{enumerate}[(i)]
+        \item If $\Vl{u} \Gt{\Cons} \Vl{v}$ then $\Vl{u} \in \Nonnil$.
+        \item If $\Vl{u} \Sym{\Bc} \Vl{v}$ then $\Vl{u} \in \Nonnil$ if and only
+            if $\Vl{v} \in \Nonnil$.
+    \end{enumerate}
+
+    Since $\Nonnil$ is the smallest subset with these properties, and since the
+    properties only mention list variables, $\Nonnil$ will only contain list
+    variables.
+\end{Definition}
+
+\section{Inference System $\INF{\BC}$}\label{sec:inf-bc}
+
+Our algorithm is given by a set of inference rules $\INF{\BC}$. The goal is to
+transform the list equations of a unification problem into dag-solved form. The
+inference rules come in two flavors: \emph{deterministic} and
+\emph{nondeterministic}, where determinism means that no backtracking is
+required in the rule's application. Rules whose label contains the
+\Inf{-nondet} suffix are nondeterministic.
+
+To simplify the definitions of the inference rules, we assume that any relation
+defined in terms of a unification problem (e.g., the condition of rule
+\ref{inf:nil-soln-3}) refers to the problem in the premise of the rule. We
+split $\INF\BC$ into three sections: General list inference rules (L1--L3),
+$\BC$-specific inference rules (BC1--BC9), and failure inference rules
+(F1--F2).
+
+\subsection{List Inference Rules}
+
+First are the general list inference rules. These rules are all deterministic.
+Inference rules \ref{inf:triv-elim} and \ref{inf:var-elim} are the only rules
+in $\INF\BC$ that potentially modify element equations --- since the variables
+are untyped, these rules can apply to either list or element equations.
+
+\begin{enumerate}[(L1), ref=L\arabic*, align=left]
+    \item \InfLabel{triv-elim}{Trivial Elimination}
+        \[\InfDef
+            { \Prob  }{ u \ueq u }
+            { \Prob }{}
+        \]
+    \item \InfLabel{var-elim}{Variable Elimination}
+        \[\CondInfDef
+            {       \Prob  }{ u \ueq v }
+            { [v/u](\Prob) }{ u \ueq v }
+            { if $u \in \Var(\Prob)$ }
         \]
 
-    \item \InfRuleLabel{cancel-cons}{Cancel{}lation on $\Cons$}
-        \[\InfRule
-            { \EQ }{ U \ueq cons(v, W), \; U \ueq cons(x, Y) }
-            {     }{ U \ueq cons(v, W), \; x \ueq v, \; Y \ueq W }
+    \item \InfLabel{cancel-cons}{Cancel{}lation on $\Cons$}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Cons(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \;
+                       \Ve{x} \ueq \Ve{v}, \; \Vl{y} \ueq \Vl{w} }
+        \]
+\end{enumerate}
+
+\subsection{$\BC$-Specific Inference Rules}
+
+Next are the $\BC$-specific rules. Note that these rules are applied regardless
+of the element theory. The last three are nondeterministic.
+
+\begin{enumerate}[(BC1), ref=BC\arabic*, align=left]
+    \item \InfLabel{nil-soln-1}{Nil Solution 1}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
         \]
 
-    \item \InfRuleLabel{nil-soln-1}{Nil Solution 1}
-        \[\InfRule
-            { \EQ }{ U \ueq bc(V, w), \; U \ueq nil }
-            {     }{ U \ueq nil, \; V \ueq nil }
+    \item \InfLabel{nil-soln-2}{Nil Solution 2}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{w} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
         \]
 
-    \item \InfRuleLabel{nil-soln-2}{Nil Solution 2}
-        \[\InfRule
-            { \EQ }{ U \ueq bc(V, w), \; V \ueq nil }
-            {     }{ U \ueq nil, \; V \ueq nil }
+    \item \InfLabel{nil-soln-3}{Nil Solution 3}
+        \[\CondInfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}) }
+            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
+            {if $\Vl{w} \Gt[+]{\Bc} \Vl{u}$}
         \]
 
-    \item \InfRuleLabel{nil-soln-3}{Nil Solution 3}
-        \[\CondInfRule
-            { \EQ }{ U \ueq bc(V, w) }
-            {     }{ U \ueq nil, \; V \ueq nil }
-            {$\mathrm{if} ~ V >_{bc}^{+} U $}
+    \item \InfLabel{semi-cancel-bc}{Semi-Cancel{}lation on $\Bc$, at a $\Bc/\Bc$-peak}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{v}, \Vl{x}) }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{w} \ueq \Vl{x} }
         \]
 
-    \item \InfRuleLabel{semi-cancel-bc}{Semi-Cancel{}lation on $\Bc$, at a $\Bc/\Bc$-peak}
-        \[\InfRule
-            { \EQ }{ U \ueq bc(V, w), \; U \ueq bc(X, w) }
-            { \EQ }{ U \ueq bc(V, w), \; W \ueq V }
+    \item \InfLabel{push-bc-below}{Push $\Bc$ Below $\Cons$, at a $\Nonnil$ $\Bc/\Bc$-peak}
+        \[\CondInfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+                       \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\[4pt]
+                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \; \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+                       \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) }
+            { if $\Vl{u} \in \Nonnil$ }
         \]
 
-    \item \InfRuleLabel{push-bc-below}{Push $\Bc$ below $\Cons$, at a $\Nonnil$ $\Bc/\Bc$-peak}
-        \[\CondInfRule
-            { \EQ }{ U \ueq bc(V, w), \; U \ueq bc(X, y) }
-            { \EQ }{      V \ueq cons(v', Z), \; X \ueq cons(x', Z), \;
-                          U \ueq cons(u', U''),
-                      \\& U'' \ueq bc(Z, u'), \; u' \ueq h(v', w), \;
-                          u' \ueq h(x', y) }
-            { if $U \in \Nonnil$ }
+    \item \InfLabel{splitting}{Splitting, at a $\Cons/\Bc$-peak}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}) , \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{y}''), \;
+                       \Vl{w} \ueq \Bc(\Ve{v}, \Vl{y}''), \; \Ve{v} \ueq \Ff(\Ve{y}', \Ve{x}) }
         \]
-\end{itemize}
 
-\section{Nondeterminism}\label{sec:nondet}
+    \item \InfLabel{nil-soln-nondet}{Nil-solution-Branch for $\Bc$, at a $\Bc/\Bc$-peak}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil, \; \Vl{y} \ueq \Nil }
+        \]
 
-\section{Dependency Graph Transformations}\label{sec:dep-graph-trans}
+    \item \InfLabel{non-nil-nondet}{Guess a non-nil branch for $\Bc$, at a $\Bc/\Bc$-peak}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+                       \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\[4pt]
+                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \; \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+                       \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) }
+        \]
+
+    \item \InfLabel{cancel-bc-nondet}{Cancel{}lation on $\Bc$}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Ve{x} \ueq \Ve{v}, \; \Vl{y} \ueq \Vl{w} }
+        \]
+\end{enumerate}
+
+\subsection{Failure Inference Rules}
+
+Lastly we have two failure inference rules. Both are deterministic. Here
+$\Fail$ represents an unsolvable unification problem --- essentially a bottom
+element.
+
+\begin{enumerate}[(F1), ref=F\arabic*, align=left]
+    \item \InfLabel{occurs-check}{Occurs-Check Violation}
+        \[\CondInfDef
+            { \Prob }{}
+            { \Fail }{}
+            { if $\Vl{u} \in \Var(\Prob)$ and $\Vl{u} \Gt{\Len} \Vl{u}$ }
+        \]
+
+    \item \InfLabel{size-conflict}{Size Conflict}
+        \[\InfDef
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Nil }
+            { \Fail }{}
+        \]
+\end{enumerate}
+
+\section{Strategy for Chosing Rules}
+
+The inference rules of $\INF\BC$ should be applied in a particular order. We
+provide one strategy, and show that this strategy is terminating.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We define a strategy
+    $S_\BC$ for $\INF\BC$ as follows:
+    \begin{enumerate}[(1)]
+        \item If one of F1 or F2 is applicable, pick that rule.
+        \item Otherwise, if one of L1--L3 is applicable, pick the lowest
+            numbered applicable rule.
+        \item Otherwise, if one of BC1--BC9 is applicable, pick the lowest
+            numbered applicable rule.
+        \item Otherwise terminate.
+    \end{enumerate}
+\end{Definition}
+
+To prove termination of $S_\BC$, we first define two new relations on list
+variables.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Vl{u}$ and
+    $\Vl{v}$ be variables in $\Var(\Prob)$. We define $\Sym{\EqLabel}$ to be
+    the smallest equivalence relation on the list variables of $\Prob$ such
+    that $\Vl{u} \Sym{\EqLabel} \Vl{v}$ if either $(\Vl{u} \ueq \Vl{v}) \in
+    \Prob$ or $\{\Vl{u} \ueq \Nil, \, \Vl{v} \ueq \Nil\} \subseteq \Prob$.
+\end{Definition}
+
+Variables are related by $\Sym{\EqLabel}$ are equivalent in the sense that they
+must be assigned equal values in any solution.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We define $\Sym{\beta}$ to
+    be the smallest equivalence relation on the list variables of $\Prob$ such
+    that:
+    \begin{enumerate}[(i)]
+        \item ${\Sym{\Bc}} \cup {\Sym{\EqLabel}} \; \subseteq \; {\Sym{\beta}}$
+        \item For $\Vl{u}$, $\Vl{v}$, $\Vl{x}$, and $\Vl{y}$ in $\Var(\Prob)$,
+            if $\Vl{u} \Gt{\Cons} \Vl{x}$ and $\Vl{v} \Gt{\Cons} \Vl{y}$, then
+            $\Vl{u} \Sym{\beta} \Vl{v}$ if and only if $\Vl{x} \Sym{\beta}
+            \Vl{y}$.
+    \end{enumerate}
+
+    We write $\Var(\Prob)/{\Sym{\beta}}$ for the set of
+    $\Sym{\beta}$-equivalence classes of $\Var(\Prob)$, and we write
+    $\BetaEqC{\Vl{u}}$ for the equivalence class containing the variable
+    $\Vl{u}$.
+\end{Definition}
+
+The $\Sym{\beta}$-equivalence classes of $\Prob$ correspond to ``levels'' in
+the dependency graph, with $\Bc$-labelled edges running between nodes at the
+same level on $\Cons$ ``chains''. We will now make these ideas more formal.
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We extend the definition of
+    the $\Gt{\Cons}$ relation to $\Sym{\beta}$-equivalence classes so that
+    $\EqClass{\Vl{u}}{\beta} \Gt{\Cons} \EqClass{\Vl{v}}{\beta}$ if and only if
+    there are variables $\Vl{u}$ and $\Vl{v}$ in $\EqClass{\Vl{u}}{\beta}$ and
+    $\EqClass{\Vl{v}}{\beta}$, respectively, such that $\Vl{u} \Gt{\Cons}
+    \Vl{v}$.
+\end{Definition}
+
+\begin{Lemma}\label{lemma:equiv-class-bound}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. For any problem $\Prob'$
+    such that $\Prob \InfTo[*]{\INF\BC} \Prob'$,
+    \[ 0 \; \leq \;
+       |\Var(\Prob') / {\Sym{\beta}}| - |\Var(\Prob) / {\Sym{\beta}}| \; \leq \;
+       |\Var(\Prob) / {\Sym{\beta}}| \cdot |\Var(\Prob)| \]
+\end{Lemma}
+
+\begin{proof}
+    The inference rules of $\INF\BC$ preserve $\Sym{\beta}$-equivalence classes,
+    in the sense that if $\Vl{u}$ and $\Vl{v}$ are variables in $\Prob$, then
+    $\Vl{u} \Sym{\beta} \Vl{v}$ in $\Prob$ if and only if $\Vl{u} \Sym{\beta}
+    \Vl{v}$ in $\Prob'$. Therefore, no equivalence classes are ``lost''; only
+    new equivalence classes are added.
+    The only rules in $\INF\BC$ that increase the number of $\Cons$ edges, and
+    thus potentially the number of $\Sym{\beta}$-equivalence classes, are
+    \ref{inf:push-bc-below}, \ref{inf:splitting}, and \ref{inf:non-nil-nondet}.
+
+    In the first case, since $\Vl{u}$ is in $\Nonnil$, $\Vl{u}$ and $\Vl{u}''$
+    must be elements of existing $\Sym{\beta}$-equivalence classes. Since
+    $\Vl{u}''$ and $\Vl{z}$ share an equivalence class, so do $\Vl{u}$,
+    $\Vl{w}$, and $\Vl{y}$. Thus the number of equivalence classes does not
+    increase.
+
+    In the second case, since $\Vl{w}$ and $\Vl{y}''$ are in the same
+    $\Sym{\beta}$-equivalence class, so are $\Vl{u}$ and $\Vl{y}$. Thus the
+    number of equivalence classes does not increase.
+
+    The third case is almost the same as the first, except it is not required
+    that $\Vl{u}$ be in $\Nonnil$. Thus the variable $\Vl{u}''$ may be in a new
+    $\Sym{\beta}$-equivalence class. However, since only two variables are
+    added to the new equivalence class, $|\BetaEqC{\Vl{u}}| >
+    |\BetaEqC{\Vl{u}''}|$. Thus the number of new equivalence classes that can
+    be created below $\BetaEqC{\Vl{u}}$ is bounded by $|\Var(\Prob)|$, and the
+    total number of new equivalence classes is bounded by $|\Var(\Prob) /
+    {\Sym{\beta}}| \cdot |\Var(\Prob)|$.
+\end{proof}
+
+\begin{Lemma}\label{lemma:gt-cons-partial-order}
+    Let $\Prob$ be a $(\BCUF)$-unification problem such that none of the
+    failure rules of $\INF\BC$ is applicable. Then $\Gt[+]{\Cons}$ is a
+    wel{}l-founded strict partial order on the $\Sym{\beta}$-equivalence
+    classes of $\Var(\Prob)$.
+\end{Lemma}
+
+\begin{proof}
+    The relation $\Gt[+]{\Cons}$ is by its definition transitive. Since failure
+    rule \ref{inf:occurs-check} does not apply, $\Gt[+]{\Cons}$ is also
+    irreflexive. Thus it is asymmetric and we need only show well-foundedness.
+
+    By \cref{lemma:equiv-class-bound} the number of $\Sym{\beta}$-equivalence
+    classes is finite, so if $\Gt[+]{\Cons}$ were not well-founded, there would
+    have to be an equivalence class $\EqClass{\Vl{u}}{\beta}$ such that
+    $\EqClass{\Vl{u}}{\beta} \Gt[+]{\Cons} \EqClass{\Vl{u}}{\beta}$. But then
+    there would be a variable $\Vl{u} \in \EqClass{\Vl{u}}{\beta}$ such that
+    $\Vl{u} \Gt{\Len} \Vl{u}$ and \ref{inf:occurs-check} would apply. Thus
+    $\Gt[+]{\Cons}$ is well-founded on $\Sym{\beta}$-equivalence classes.
+\end{proof}
+
+\begin{Lemma}\label{lemma:total-connected-comp}
+    Let $\Prob$ be a $(\BCUF)$-unification problem such that $\Gt[+]{\Cons}$ is
+    a strict partial order on the $\Sym{\beta}$-equivalence classes of
+    $\Var(\Prob)$. Let $\DepGraph(\Prob)$ be the dependency graph of $\Prob$,
+    and let $C$ be a connected component of $\DepGraph(\Prob)$. Then
+    $\Gt[+]{\Cons}$ is total on the $\Sym{\beta}$-equivalence classes of nodes
+    in $C$.
+\end{Lemma}
+
+\begin{proof}
+    Consider two $\Gt[+]{\Cons}$-incomparable $\Sym{\beta}$-equivalence classes
+    $\BetaEqC{\Vl{u}}$ and $\BetaEqC{\Vl{v}}$ of nodes in $C$. Since these
+    equivalence classes are in the same connected component, there must be a
+    node $\Vl{w}$ such that there is a path to or from $\Vl{w}$ to some
+    $\Vl{u}$ in $\BetaEqC{\Vl{u}}$ and some $\Vl{v}$ in $\BetaEqC{\Vl{v}}$. If
+    there is a path from $\Vl{u}$ to $\Vl{w}$ to $\Vl{v}$ or from $\Vl{v}$ to
+    $\Vl{w}$ to $\Vl{u}$, then $\EqClass{\Vl{u}}{\beta} \Gt[+]{\Cons}
+    \EqClass{\Vl{v}}{\beta}$ or $\EqClass{\Vl{v}}{\beta} \Gt[+]{\Cons}
+    \EqClass{\Vl{u}}{\beta}$, respectively. So, if $\BetaEqC{\Vl{u}}$ and
+    $\BetaEqC{\Vl{v}}$ are incomparable, then either $\BetaEqC{\Vl{u}}
+    \Gt[+]{\Cons} \BetaEqC{\Vl{w}} \Lt[+]{\Cons} \BetaEqC{\Vl{v}}$, or
+    $\BetaEqC{\Vl{u}} \Lt[+]{\Cons} \BetaEqC{\Vl{w}} \Gt[+]{\Cons}
+    \BetaEqC{\Vl{v}}$.
+
+    In the first case when $\BetaEqC{\Vl{u}} \Gt[+]{\Cons} \BetaEqC{\Vl{w}}
+    \Lt[+]{\Cons} \BetaEqC{\Vl{v}}$, there must be variables $\Vl{w}_1$ and
+    $\Vl{w}_2$ in $\BetaEqC{\Vl{w}}$ such that $\Vl{u} \Gt[+]{\Cons} \Vl{w}_1
+    \Sym{\beta} \Vl{w}_2 \Lt[+]{\Cons} \Vl{v}$. But then $\Vl{u} \Sym{\beta}
+    \Vl{v}$ and $\BetaEqC{\Vl{u}} = \BetaEqC{\Vl{v}}$. Similarly, in the second
+    case when $\BetaEqC{\Vl{u}} \Gt[+]{\Cons} \BetaEqC{\Vl{w}} \Lt[+]{\Cons}
+    \BetaEqC{\Vl{v}}$, there must be variables $\Vl{w}_1$ and $\Vl{w}_2$ in
+    $\BetaEqC{\Vl{w}}$ such that $\Vl{u} \Lt[+]{\Cons} \Vl{w}_1 \Sym{\beta}
+    \Vl{w}_2 \Gt[+]{\Cons} \Vl{v}$. But again, then $\Vl{u} \Sym{\beta} \Vl{v}$
+    and $\BetaEqC{\Vl{u}} = \BetaEqC{\Vl{v}}$.
+
+    Thus, if $\BetaEqC{\Vl{u}}$ and $\BetaEqC{\Vl{v}}$ are incomparable in
+    $\Gt[+]{\Cons}$, then $\BetaEqC{\Vl{u}} = \BetaEqC{\Vl{v}}$. Therefore,
+    $\Gt[+]{\Cons}$ is a strict total order on $\Sym{\beta}$-equivalence
+    classes of nodes in $C$. \end{proof}
+
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem such that $\Gt[+]{\Cons}$ is
+    a well-founded strict partial order on the $\Sym{\beta}$-equivalence
+    classes of $\Var(\Prob)$. Let $\EqClass{\Vl{u}}{\beta}$ be a
+    $\Sym{\beta}$-equivalence class. We define the $\Cons$-depth of
+    $\EqClass{\Vl{u}}{\beta}$, written $\ConsDepth(\EqClass{\Vl{u}}{\beta})$, as
+    follows:
+    \begin{enumerate}[(i)]
+        \item If $\EqClass{\Vl{u}}{\beta}$ is maximal in $\Gt[+]{\Cons}$, then
+            $\ConsDepth(\EqClass{\Vl{u}}{\beta}) := 0$.
+        \item Otherwise, $\ConsDepth(\EqClass{\Vl{u}}{\beta}) :=
+            \ConsDepth(\EqClass{\Vl{v}}{\beta}) + 1$, where $\EqClass{\Vl{v}}{\beta}
+            \Gt{\Cons} \EqClass{\Vl{u}}{\beta}$.
+    \end{enumerate}
+    Note that, in the second case, $\EqClass{\Vl{v}}{\beta}$ must be unique by
+    \cref{lemma:total-connected-comp}.
+
+    For convenience, we extend this definition to list variables in the obvious
+    way, so that $\ConsDepth(\Vl{u}) := \ConsDepth(\EqClass{\Vl{u}}{\beta})$.
+\end{Definition}
+
+\begin{Theorem}\label{lemma:inf-bc-terminates}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. Applying inference rules
+    from $\INF\BC$ using strategy $S_\BC$ always terminates.
+\end{Theorem}
+
+\begin{proof}
+    Suppose the strategy does not terminate for some initial problem $\Prob_0$.
+    Since there are a finite number of inference rules, at least one inference
+    rule must be applied infinitely many times. Clearly this rule must not be a
+    failure rule, since those rules cause immediate termination.
+
+    For the remaining rules, consider the measure function
+    $\phi\colon \ProbType \to \Nat^3$ given by:
+    \begin{align*}
+        \phi(\Prob) &:= \left(
+            \text{\textit{free-classes}}, \;
+            \text{\textit{free-depth}}, \;
+            |\DepGraph(\Prob)|, \;
+            |\Prob|
+        \right)
+        \intertext{where}
+        \text{\textit{free-classes}} &:= m - |\Var(\Prob)/{\Sym{\beta}}| \\[4pt]
+        \text{\textit{free-depth}} &:= \sum \, \{
+            m - \ConsDepth(\Vl{u}) \mid (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob
+        \} \\[4pt]
+        m &:= |\Var(\Prob_0)/{\Sym{\beta}}| \cdot (1 + |\Var(\Prob_0)|)
+    \end{align*}
+
+    The first component, \textit{free-classes}, measures the number of number
+    of unused $\Sym{\beta}$-equivalence class ``slots''. The second component,
+    \textit{free-depth}, is intuitively a measure of how many times a
+    $\Bc$-edge can be ``lowered'' by rules like \ref{inf:splitting}. Note that
+    $m$, which measures the maximum number of $\Sym{\beta}$-equivalence
+    classes, is fixed by the initial input probem $\Prob_0$ thanks to the bound
+    given by \cref{lemma:equiv-class-bound}.
+
+    The function $\phi$ is only defined when $\ConsDepth$ is defined --- i.e.,
+    only when $\Gt[+]{\Cons}$ is a well-founded strict partial order on the
+    $\Sym{\beta}$-equivalence classes. Since the failure rules must not apply,
+    this is the case according to \cref{lemma:gt-cons-partial-order}.
+
+    For each remaining inference rule in $\INF\BC$, we will show that applying
+    the rule decreases the measure of the problem.
+
+    \begin{itemize}[align=left]
+        \item[(\ref{inf:triv-elim})] This rule preserves the first three
+            components and decreases the last.
+
+        \item[(\ref{inf:var-elim}--\ref{inf:cancel-cons})] These rules preserve
+            or decrease the first two components and decrease the third.
+    \end{itemize}
+
+    \begin{itemize}[align=left]
+        \item[(\ref{inf:nil-soln-1}--\ref{inf:semi-cancel-bc})] These rules all
+            preserve or decrease the first two components and decrease the
+            third.
+
+        \item[(\ref{inf:push-bc-below}--\ref{inf:splitting})] While these rules
+            do add several new variables and edges to the dependency graph,
+            they add no new $\Sym{\beta}$-equivalence classes, and they remove
+            a $\Bc$-equation and add a new one with a variable that has a
+            greater $\Cons$-depth. Thus \ref{inf:push-bc-below} and
+            \ref{inf:splitting} preserve the first component and decrease the
+            second.
+
+        \item[(\ref{inf:nil-soln-nondet})] This rule behaves the same as
+            \ref{inf:nil-soln-1}--\ref{inf:nil-soln-3}, preserving or decreasing
+            the first two components and decreasing the third.
+
+        \item[(\ref{inf:non-nil-nondet})] This rule either behaves the same as
+            \ref{inf:push-bc-below}, preserving the first component and
+            decreasing the second, or it creates a new
+            $\Sym{\beta}$-equivalence class and decreases the first component.
+
+        \item[(\ref{inf:cancel-bc-nondet})] This rule behaves the same as
+            \ref{inf:semi-cancel-bc}, preserving or decreasing the first two
+            components and decreasing the third.
+    \end{itemize}
+
+    Each non-failure inference rule in $\INF\BC$ causes the measure of the
+    problem to strictly decrease. Since $>$ is well-founded on $\Nat^3$,
+    this cannot continue infinitely, so no rule in $\INF\BC$ can be applied
+    infinitely many times. Thus there is no problem $\Prob_0$ such that
+    strategy $S_\BC$ for $\INF\BC$ does not terminate.
+\end{proof}
+
+\section{Algorithm}\label{sec:bc-algorithm}
 
 \section{Soundness}\label{sec:bc-soundness}
 
@@ -62,7 +473,7 @@
 
 \section{Termination}\label{sec:bc-termination}
 
-\section{Algorithm}\label{sec:bc-algorithm}
-
 \section{Runtime Analysis}\label{sec:bc-runtime-analysis}
+
+\section{Dependency Graph Transformations}\label{sec:dep-graph-trans}
 

@@ -31,7 +31,7 @@ $\sigma$. If $\sigma$ is important, this can be written as $t_1
 \LessGeneralThan[\sigma] t_2$. Here $t_1$ is said to be \emph{less general
 than}, or \emph{subsumed by}, $t_2$. There is a similar ordering for
 substitutions, where $\sigma_1 \LessGeneralThan \sigma_2$ if and only if
-$\sigma_1 = \theta \compcirc \sigma_2$ for some substitution $\theta$.
+$\sigma_1 = \theta \Compose \sigma_2$ for some substitution $\theta$.
 
 \section{Equational Theories and Term Rewriting}\label{sec:eq-sys-term-rew}
 
@@ -109,7 +109,7 @@ hold:
 This second condition gives dag-solved form its name, since the equations can
 be thought to form an acyclic graph. For such a problem in
 dag-solved form, the substitution
-\[\sigma = \{ x_n \mapsto t_n \} \compcirc \dotsb \compcirc \{ x_1 \mapsto t_1 \}\]
+\[\sigma = \{ x_n \mapsto t_n \} \Compose \dotsb \Compose \{ x_1 \mapsto t_1 \}\]
 is always a solution.
 
 \section{Dependency Graphs}\label{sec:dep-graphs}
@@ -133,10 +133,59 @@ and only if $\Arity(\Root(t))$ has range $s$. Variables are annotated by sorts,
 where variable $\V{x}{s} \in \X_s$ can only be instantiated with a term of sort
 $s$.
 
-As a notational short-hand for the sorts we study in this paper, any variable
-without a sort annotation is assumed to have sort $\Elt$. So $\Ve{x}$ and
-$\V{x}{\Elt}$ are the same. For variables of sort $\List$, we will place a bar
-over the variable. Thus $\Vl{y}$ and $\V{y}{\List}$ are the same.
+As a notational short-hand for the sorts we study in this paper, we will write
+a dot over variables of sort $\Elt$. So $\Ve{x}$ and $\V{x}{\Elt}$ are the
+same. For variables of sort $\List$, we will write an arrow over the variable.
+Thus $\Vl{y}$ and $\V{y}{\List}$ are the same.
 
 \section{Inference Rules}\label{sec:inf-rules}
+
+Our algorithms use inference rules and inference systems to transform
+unification problems into solvable forms. The inference rules we use are
+not quite the same as inference rules from symbolic logic, so we will briefly
+describe their usage.
+
+A \emph{problem pattern} is an expression of the form $S \uplus \{ s_1 \ueq
+t_1, \dotsc, s_n \ueq t_n \}$, where $S$ is a set name and $s_i \ueq t_i$ is an
+equation. Such a problem pattern is said to match a problem $\Prob$ if and only
+if $\Prob = \Prob' \uplus \{ s'_1 \ueq t'_1, \dotsc, s'_n \ueq t'_n \}$, where
+$\uplus$ is disjoint union, and each $s'_i = \theta(s_i)$ and $t'_i =
+\theta(t_i)$ for some substitution $\theta$.
+
+Our notion of an inference rule is different from the standard notion from
+symbolic logic. For our purposes, an \emph{inference rule} is a tripple
+containing the following:
+\begin{enumerate}[(i)]
+    \item A problem pattern, called the \emph{premise}
+    \item A problem, called the \emph{conclusion}
+    \item An optional condition
+\end{enumerate}
+and is written:
+\[\CondInfDef
+    {S}{s_1 \ueq t_1, \; \dotsc, \; s_m \ueq t_m}
+    {S}{s'_1 \ueq t'_1, \; \dotsc, \; s'_n \ueq t'_n}
+    {if \textit{condition}}
+\]
+An inference rule $\rho$ can be applied to a problem $\Prob$ if its condition
+holds (or was ommitted) and its premise matches $\Prob$ with substitution
+$\theta$. We then obtain a new problem $\Prob'$ and write $\Prob \InfTo{\rho}
+\Prob'$, where
+\[ \Prob' := S \cup \{ \theta(s'_1) \ueq \theta(t'_1), \dotsc, \theta(s'_n)
+\ueq \theta(t'_n) \} \]
+
+A \emph{failure inference rule} is an inference rule with the special
+conclusion $\Fail$. These inference rules are applied as normal, but the result
+indicates that the original problem was unsolvable.
+
+An \emph{inference system} is a set of inference rules. An inference system
+$\INF{}$ can be applied to a problem $\Prob$ to obtain a new problem $\Prob'$,
+written $\Prob \InfTo{\INF{}} \Prob'$ if and only if there is an inference rule
+$\rho$ in $\INF{}$ such that $\Prob \InfTo{\rho} \Prob'$.
+
+Note that the process for choosing inference rules is left unspecified. Often
+more than once inference rule in a system will be applicable to the same
+problem, and there is no guarantee that different paths will lead to the same
+result (i.e., inference systems are not assumed to be confluent) or that a path
+will terminate at all. An inference system should be accompanied by a
+\emph{strategy} --- an algorithm for chosing an inference rule given a problem.
 
