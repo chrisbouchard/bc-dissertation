@@ -102,7 +102,7 @@ Since the original chaining operation is a higher-order function, we would like
 some way to make $\Ff$ behave like different functions. We do this using an
 equational theory $\FF$ called the \emph{element theory}. This theory defines
 the function symbol $\Ff\colon \Elt \times \Elt \to \Elt$. A theory $\FF$ must
-satisfy three conditions to be an element theory:
+satisfy four conditions to be an element theory:
 \begin{enumerate}[(i)]
     \item $\FF$ and $\BC$ are \emph{disjoint except for $\Ff$}, i.e.,
         $\Sig(\FF) \, \cap \, \Sig(\BC) \subseteq \{ \Ff \}$.
@@ -112,6 +112,7 @@ satisfy three conditions to be an element theory:
     \item $\Ff$ is \emph{semicancellative}, i.e., if $\Ff(t_1, t_2)
         \Equals{\FF} \Ff(t_3, t_4)$, then $t_1 \Equals{\FF} t_3 \, \Iff \, t_2
         \Equals{\FF} t_4$.
+    \item The $\FF$-unification problem is finitary.
 \end{enumerate}
 Note that the first condition does not preclude $\FF$ from using function
 symbols in addition to $\Ff$. It just says those symbols cannot be $\Bc$,
@@ -127,7 +128,8 @@ $\Cons$, or $\Nil$.
     condition holds because a term cannot be identically equal to a proper
     subterm of itself. The third condition holds because if $\Ff(t_1, t_2)
     \Equals{\FF} \Ff(t_3, t_4)$, then by decomposition $t_1 \Equals{\FF} t_3$
-    and $t_2 \Equals{\FF} t_4$.
+    and $t_2 \Equals{\FF} t_4$. Finally, the fourth condition holds since
+    unification modulo the empty theory is unitary.
 \end{proof}
 
 Let $E_\oplus$ be the following equational theory:

@@ -5,6 +5,19 @@ is an element theory. We present an algorithm for solving this problem, and
 show that this algorithm is sound, complete, and terminating. In doing so show
 that the unification problem modulo $(\BCUF)$ is finitary.
 
+In this chapter, and in all subsequent chapters, we will assume that all
+unification problems are in standard form as described in \cref{sec:std-form}.
+With that in mind, we make the following definition:
+
+\begin{Definition}
+    We partition the equations in a $(\BCUF)$-unification problem based on the
+    sort of their left-hand variable. We write $\ListEq(\Prob)$ for the list
+    equations of $\Prob$, and $\EltEq(\Prob)$ for the element equations.
+\end{Definition}
+
+It is worth noting that any unifier of $\Prob$ is a unifier of $\ListEq(\Prob)$
+and $\EltEq(\Prob)$.
+
 \section{$\BC$-Dependency Graph}
 
 Recall that for a unification problem $\Prob$, we can define the dependency
@@ -62,12 +75,10 @@ we compute a set $\Nonnil$ of variables that cannot be assigned $\Nil$ in
 
 \section{Inference System $\INF{\BC}$}\label{sec:inf-bc}
 
-Our algorithm is given by a set of inference rules $\INF{\BC}$. The goal is to
-transform the list equations of a unification problem into dag-solved form. The
-inference rules come in two flavors: \emph{deterministic} and
-\emph{nondeterministic}, where determinism means that no backtracking is
-required in the rule's application. Rules whose label contains the
-\Inf{-nondet} suffix are nondeterministic.
+Our algorithm is given by an inference system $\INF\BC$. The goal is to
+transform the list equations of a unification problem into dag-solved form.
+Our system $\INF\BC$ uses both deterministic and nondeterministic inference
+rules.
 
 To simplify the definitions of the inference rules, we assume that any relation
 defined in terms of a unification problem (e.g., the condition of rule
@@ -84,12 +95,12 @@ in $\INF\BC$ that potentially modify element equations --- since the variables
 are untyped, these rules can apply to either list or element equations.
 
 \begin{enumerate}[(L1), ref=L\arabic*, align=left]
-    \item \InfLabel{triv-elim}{Trivial Elimination}
+    \item \InfLabel{triv-elim}{Trivial elimination}
         \[\InfDef
             { \Prob  }{ u \ueq u }
             { \Prob }{}
         \]
-    \item \InfLabel{var-elim}{Variable Elimination}
+    \item \InfLabel{var-elim}{Variable elimination}
         \[\CondInfDef
             {       \Prob  }{ u \ueq v }
             { [v/u](\Prob) }{ u \ueq v }
@@ -111,67 +122,86 @@ Next are the $\BC$-specific rules. Note that these rules are applied regardless
 of the element theory. The last three are nondeterministic.
 
 \begin{enumerate}[(BC1), ref=BC\arabic*, align=left]
-    \item \InfLabel{nil-soln-1}{Nil Solution 1}
+    \item \InfLabel{nil-soln-1}{Nil solution 1}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Nil }
-            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Nil, \;
+                       \Vl{w} \ueq \Nil }
         \]
 
-    \item \InfLabel{nil-soln-2}{Nil Solution 2}
+    \item \InfLabel{nil-soln-2}{Nil solution 2}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{w} \ueq \Nil }
-            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{w} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Nil, \;
+                       \Vl{w} \ueq \Nil }
         \]
 
-    \item \InfLabel{nil-soln-3}{Nil Solution 3}
+    \item \InfLabel{nil-soln-3}{Nil solution 3}
         \[\CondInfDef
             { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}) }
             { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil }
-            {if $\Vl{w} \Gt[+]{\Bc} \Vl{u}$}
+            { if $\Vl{w} \Gt[+]{\Bc} \Vl{u}$ }
         \]
 
-    \item \InfLabel{semi-cancel-bc}{Semi-Cancel{}lation on $\Bc$, at a $\Bc/\Bc$-peak}
+    \item \InfLabel{semi-cancel-bc}{Semi-cancel{}lation on $\Bc$}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{v}, \Vl{x}) }
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{w} \ueq \Vl{x} }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{v}, \Vl{x}) }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{w} \ueq \Vl{x} }
         \]
 
-    \item \InfLabel{push-bc-below}{Push $\Bc$ Below $\Cons$, at a $\Nonnil$ $\Bc/\Bc$-peak}
+    \item \InfLabel{push-bc-below}{Push $\Bc$ below $\Cons$}
         \[\CondInfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
-            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \;
+                       \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
                        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\[4pt]
-                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \; \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+                       \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
                        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) }
             { if $\Vl{u} \in \Nonnil$ }
         \]
 
-    \item \InfLabel{splitting}{Splitting, at a $\Cons/\Bc$-peak}
+    \item \InfLabel{splitting}{Splitting}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
-            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}) , \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{y}''), \;
-                       \Vl{w} \ueq \Bc(\Ve{v}, \Vl{y}''), \; \Ve{v} \ueq \Ff(\Ve{y}', \Ve{x}) }
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}) , \;
+                       \Vl{y} \ueq \Cons(\Ve{y}', \Vl{y}''), \;
+                       \Vl{w} \ueq \Bc(\Ve{v}, \Vl{y}''), \;
+                       \Ve{v} \ueq \Ff(\Ve{y}', \Ve{x}) }
         \]
 
-    \item \InfLabel{nil-soln-nondet}{Nil-solution-Branch for $\Bc$, at a $\Bc/\Bc$-peak}
+    \item \InfLabel{nil-soln-nondet}{Nil branch (Nondeterministic)}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
-            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil, \; \Vl{y} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Nil, \; \Vl{w} \ueq \Nil, \;
+                       \Vl{y} \ueq \Nil }
         \]
 
-    \item \InfLabel{non-nil-nondet}{Guess a non-nil branch for $\Bc$, at a $\Bc/\Bc$-peak}
+    \item \InfLabel{non-nil-nondet}{Non-nil branch (Nondeterministic)}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
-            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \; \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \;
+                       \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
                        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\[4pt]
-                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \; \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+                       \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+                       \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
                        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) }
         \]
 
-    \item \InfLabel{cancel-bc-nondet}{Cancel{}lation on $\Bc$}
+    \item \InfLabel{cancel-bc-nondet}{Cancel{}lation branch (Nondeterministic)}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
-            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \; \Ve{x} \ueq \Ve{v}, \; \Vl{y} \ueq \Vl{w} }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) }
+            { \Prob }{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+                       \Ve{x} \ueq \Ve{v}, \; \Vl{y} \ueq \Vl{w} }
         \]
 \end{enumerate}
 
@@ -191,30 +221,19 @@ element.
 
     \item \InfLabel{size-conflict}{Size Conflict}
         \[\InfDef
-            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \; \Vl{u} \ueq \Nil }
+            { \Prob }{ \Vl{u} \ueq \Cons(\Ve{v}, \Vl{w}), \;
+                       \Vl{u} \ueq \Nil }
             { \Fail }{}
         \]
 \end{enumerate}
 
-\section{Strategy for Chosing Rules}
+\section{Soundness of $\INF\BC$}
 
-The inference rules of $\INF\BC$ should be applied in a particular order. We
-provide one strategy, and show that this strategy is terminating.
+Hello world
 
-\begin{Definition}
-    Let $\Prob$ be a $(\BCUF)$-unification problem. We define a strategy
-    $S_\BC$ for $\INF\BC$ as follows:
-    \begin{enumerate}[(1)]
-        \item If one of F1 or F2 is applicable, pick that rule.
-        \item Otherwise, if one of L1--L3 is applicable, pick the lowest
-            numbered applicable rule.
-        \item Otherwise, if one of BC1--BC9 is applicable, pick the lowest
-            numbered applicable rule.
-        \item Otherwise terminate.
-    \end{enumerate}
-\end{Definition}
+\section{Termination of $\INF\BC$}
 
-To prove termination of $S_\BC$, we first define two new relations on list
+To prove termination of $\INF\BC$, we first define two new relations on list
 variables.
 
 \begin{Definition}
@@ -380,29 +399,33 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
 \end{Definition}
 
 \begin{Theorem}\label{lemma:inf-bc-terminates}
-    Let $\Prob$ be a $(\BCUF)$-unification problem. Applying inference rules
-    from $\INF\BC$ using strategy $S_\BC$ always terminates.
+    The relation $\InfTo{\INF\BC}$ is well-founded.
 \end{Theorem}
 
 \begin{proof}
-    Suppose the strategy does not terminate for some initial problem $\Prob_0$.
+    Suppose $\InfTo{\INF\BC}$ is not well-founded. Then there must be an
+    infinitely descending chain
+    \[ \Prob_0 \InfTo{\INF\BC} \Prob_1 \InfTo{\INF\BC} \dotsb \InfTo{\INF\BC}
+       \Prob_i \InfTo{\INF\BC} \dotsb \]
     Since there are a finite number of inference rules, at least one inference
-    rule must be applied infinitely many times. Clearly this rule must not be a
-    failure rule, since those rules cause immediate termination.
+    rule from $\INF\BC$ must be applied infinitely many times. Clearly this
+    rule must not be a failure rule, since those rules cause immediate
+    termination.
 
-    For the remaining rules, consider the measure function
-    $\phi\colon \ProbType \to \Nat^3$ given by:
+    For the remaining rules, consider the measure function $\phi\colon
+    \ProbType \to \Nat^4$ given by:
     \begin{align*}
-        \phi(\Prob) &:= \left(
+        \phi(\Prob_i) &:= \left(
             \text{\textit{free-classes}}, \;
             \text{\textit{free-depth}}, \;
-            |\DepGraph(\Prob)|, \;
+            |\DepGraph(\Prob_i)|, \;
             |\Prob|
         \right)
         \intertext{where}
-        \text{\textit{free-classes}} &:= m - |\Var(\Prob)/{\Sym{\beta}}| \\[4pt]
+        \text{\textit{free-classes}} &:= m - |\Var(\Prob_i)/{\Sym{\beta}}| \\[4pt]
         \text{\textit{free-depth}} &:= \sum \, \{
-            m - \ConsDepth(\Vl{u}) \mid (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob
+            m - \ConsDepth(\Vl{u}) \mid
+            (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob_i
         \} \\[4pt]
         m &:= |\Var(\Prob_0)/{\Sym{\beta}}| \cdot (1 + |\Var(\Prob_0)|)
     \end{align*}
@@ -420,12 +443,14 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     $\Sym{\beta}$-equivalence classes. Since the failure rules must not apply,
     this is the case according to \cref{lemma:gt-cons-partial-order}.
 
-    For each remaining inference rule in $\INF\BC$, we will show that applying
-    the rule decreases the measure of the problem.
+    For the remaining inference rules in $\INF\BC$, we will show that if
+    $\Prob_i \InfTo{\INF\BC} \Prob_{i+1}$ then $\phi(\Prob_i) >_\Lex
+    \phi(\Prob_{i+1})$, where $>_\Lex$ is the lexicographic order on $\Nat^4$
+    given by $>$ on $\Nat$.
 
     \begin{itemize}[align=left]
         \item[(\ref{inf:triv-elim})] This rule preserves the first three
-            components and decreases the last.
+            components and decreases the fourth.
 
         \item[(\ref{inf:var-elim}--\ref{inf:cancel-cons})] These rules preserve
             or decrease the first two components and decrease the third.
@@ -445,8 +470,8 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
             second.
 
         \item[(\ref{inf:nil-soln-nondet})] This rule behaves the same as
-            \ref{inf:nil-soln-1}--\ref{inf:nil-soln-3}, preserving or decreasing
-            the first two components and decreasing the third.
+            \ref{inf:nil-soln-1}--\ref{inf:semi-cancel-bc}, preserving or
+            decreasing the first two components and decreasing the third.
 
         \item[(\ref{inf:non-nil-nondet})] This rule either behaves the same as
             \ref{inf:push-bc-below}, preserving the first component and
@@ -459,21 +484,90 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     \end{itemize}
 
     Each non-failure inference rule in $\INF\BC$ causes the measure of the
-    problem to strictly decrease. Since $>$ is well-founded on $\Nat^3$,
+    problem to strictly decrease. Since $>_\Lex$ is well-founded on $\Nat^4$,
     this cannot continue infinitely, so no rule in $\INF\BC$ can be applied
-    infinitely many times. Thus there is no problem $\Prob_0$ such that
-    strategy $S_\BC$ for $\INF\BC$ does not terminate.
+    infinitely many times. Thus $\InfTo{\INF\BC}$ is well-founded.
 \end{proof}
 
-\section{Algorithm}\label{sec:bc-algorithm}
+\section{Algorithm $\Alg{\BC}$}\label{sec:bc-algorithm}
 
-\section{Soundness}\label{sec:bc-soundness}
+Our algorithm is split into three phases. First we use the inference system
+$\INF\BC$ to transform the list equations of a $(\BCUF)$-unification problem
+$\Prob$ into dag-solved form. We then pass the element equations to an
+algorithm for the $\FF$-unification problem. Finally, we combine the list
+equations with the element unifier to produce a solution.
 
-\section{Completeness}\label{sec:bc-completeness}
+\subsection{Phase 1: Solving List Equations}
 
-\section{Termination}\label{sec:bc-termination}
+The first phase of the algorithm is to apply $\INF\BC$ to the input problem
+exhaustively. Whenever we have a choice among nondeterministic rules, we
+guess a rule to apply.
 
-\section{Runtime Analysis}\label{sec:bc-runtime-analysis}
+\begin{Definition}
+    Let $\Prob$ be a $(\BCUF)$-unification problem. We define a strategy
+    $S_\BC$ for $\INF\BC$ as follows:
+    \begin{enumerate}[(1)]
+        \item If one of F1 or F2 is applicable to $\Prob$, pick that rule.
+        \item Otherwise, if one of L1--L3 is applicable, pick the lowest
+            numbered applicable rule.
+        \item Otherwise, if one of BC1--BC6 is applicable, pick the lowest
+            numbered applicable rule.
+        \item Otherwise, if one of BC7--BC9 is applicable, guess one of
+            the rules to apply.
+        \item Otherwise terminate.
+    \end{enumerate}
+\end{Definition}
+
+\begin{Lemma}
+    Let $\Prob$ be a $(\BCUF)$-unification problem such that $\INF\BC$ is
+    not applicable. Then $\ListEq(\Prob)$ is in dag-solved form.
+\end{Lemma}
+
+\begin{proof}
+    Suppose $\ListEq(\Prob)$ were not in dag-solved form. Then either there
+    is a variable that occurs on the left-hand side of two different equations,
+    or there is a cycle in the equations such that they cannot be ordered.
+
+    In the fist case, there are a few possibilities for the peak, and for each
+    possibility an inference rule from $\INF\BC$ must be applicable:
+    \begin{itemize}[align=left]
+        \item[$\Cons/\Cons$:] Inference rule \ref{inf:cancel-cons} is applicable.
+        \item[$\Cons/\Nil$:] Inference rule \ref{inf:size-conflict} is
+            applicable.
+        \item[$\Bc/\Cons$:] Inference rule \ref{inf:splitting} is applicable.
+        \item[$\Bc/\Nil$:] Inference rule \ref{inf:nil-soln-1} is applicable.
+        \item[$\Bc/\Bc$:] Either of the deterministic inference rules
+            \ref{inf:semi-cancel-bc} or \ref{inf:push-bc-below}, or one of the
+            nondeterministic inference rules
+            \ref{inf:nil-soln-nondet}--\ref{inf:cancel-bc-nondet}, is
+            applicable.
+        \item[$\Nil/\Nil$:] This case is not possible, since $\Prob$ is a set
+            and $\Nil$ is a constant.
+    \end{itemize}
+
+    In the second case, there is a cycle among the list equations such that
+    they cannot be ordered. Without loss of generality, we will assume that
+    this cycle contains no equations with variable right-hand sides (i.e.,
+    equations of the form $\Vl{u} \ueq \Vl{v}$), because otherwise we could
+    apply rule \ref{inf:var-elim}. If the cycle contains no $\Cons$-equations,
+    then we can apply rule \ref{inf:nil-soln-3}. If the cycle does contain
+    $\Cons$-equations, then we can apply rule \ref{inf:occurs-check}.
+
+    In both cases, a rule from $\INF\BC$ is applicable to $\Prob$, which is
+    a contradiction. Thus $\ListEq(\Prob)$ must be in dag-solved form.
+\end{proof}
+
+\subsection{Phase 2: Solving Element Equations}
+
+\subsection{Phase 3: Combining Results}
+
+\section{Soundness of $\Alg{\BC}$}\label{sec:bc-soundness}
+
+\section{Completeness of $\Alg{\BC}$}\label{sec:bc-completeness}
+
+\section{Termination of $\Alg{\BC}$}\label{sec:bc-termination}
+
+\section{Runtime Analysis of $\Alg{\BC}$}\label{sec:bc-runtime-analysis}
 
 \section{Dependency Graph Transformations}\label{sec:dep-graph-trans}
 

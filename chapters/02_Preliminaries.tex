@@ -97,6 +97,9 @@ either a variable, a constant, or a term of the form $f(x_1, \dotsc, x_n)$. A
 unification problem $\Prob$ not in standard form can be decomposed to a problem
 $\Prob'$ that is in standard form and $|\Prob|$ is at most twice $|\Prob'|$.
 
+In later chapters, we will generally assume that unification problems are given
+in standard form.
+
 A problem $\Prob = \{ x_1 \ueq t_1, \dotsc, x_n \ueq t_n \}$ in standard form
 is in \emph{dag-solved form} if and only if both of the following conditions
 hold:
@@ -111,6 +114,10 @@ be thought to form an acyclic graph. For such a problem in
 dag-solved form, the substitution
 \[\sigma = \{ x_n \mapsto t_n \} \Compose \dotsb \Compose \{ x_1 \mapsto t_1 \}\]
 is always a solution.
+
+If a problem has a variable that is the left-hand side of two different equations,
+e.g., $x \ueq t_1$ and $x \ueq t_2$, then we call this a \emph{peak}. If
+$\Root(t_1) = f_1$ and $\Root(t_2) = f_2$, then we call it a $f_1/f_2$-peak.
 
 \section{Dependency Graphs}\label{sec:dep-graphs}
 
@@ -172,6 +179,9 @@ $\theta$. We then obtain a new problem $\Prob'$ and write $\Prob \InfTo{\rho}
 \Prob'$, where
 \[ \Prob' := S \cup \{ \theta(s'_1) \ueq \theta(t'_1), \dotsc, \theta(s'_n)
 \ueq \theta(t'_n) \} \]
+In this case, $\Prob$ may be referred to as the premise, and $\Prob'$ as the
+conclusion, even though technically they are \emph{instances of} the premise
+and conclusion.
 
 A \emph{failure inference rule} is an inference rule with the special
 conclusion $\Fail$. These inference rules are applied as normal, but the result
@@ -188,4 +198,10 @@ problem, and there is no guarantee that different paths will lead to the same
 result (i.e., inference systems are not assumed to be confluent) or that a path
 will terminate at all. An inference system should be accompanied by a
 \emph{strategy} --- an algorithm for chosing an inference rule given a problem.
+
+An inference rule $\rho$ is said to be \emph{sound} if and only if, for every
+pair of problems $\Prob$ and $\Prob'$ such that $\Prob \InfTo{\rho} \Prob'$,
+every solution of $\Prob'$ is a solution of $\Prob$. Such a rule is said to be
+\emph{deterministic} if and only if every solution of $\Prob$ is a solution of
+$\Prob'$.
 
