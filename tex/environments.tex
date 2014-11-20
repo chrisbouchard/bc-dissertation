@@ -1,8 +1,25 @@
-\theoremstyle{definition}
-\newtheorem{Theorem}{Theorem}[chapter]
-\newtheorem{Lemma}{Lemma}[chapter]
+\theoremstyle{plain}
+\theoremseparator{.}
 
-\theoremstyle{definition}
-\newtheorem{Definition}{Definition}[chapter]
-\newtheorem{Example}{Example}[chapter]
+\theorembodyfont{\itshape}
+\newtheorem{Theorem}{Theorem}[section]
+\newtheorem{Lemma}[Theorem]{Lemma}
+\newtheorem{Corollary}[Theorem]{Corollary}
+
+\theorembodyfont{\normalfont}
+\newtheorem{Definition}[Theorem]{Definition}
+\newtheorem{Example}[Theorem]{Example}
+
+\theoremstyle{nonumberplain}
+\theoremsymbol{$\square$}
+\theoremheaderfont{\itshape}
+\theorembodyfont{\normalfont}
+\newtheorem{proof}{Proof}
+
+% The Theorem counter gets reset when section is incremented, but not when
+% section is reset to zero. Patch things to reset the Theorem counter with each
+% chapter as well, so we can have, e.g., Theorem 4.0.1.
+% \makeatletter
+% \@addtoreset{Theorem}{chapter}
+% \makeatother
 

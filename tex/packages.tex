@@ -3,7 +3,7 @@
 \usepackage{graphicx}
 \usepackage{tocbibind}
 \usepackage{setspace}
-\usepackage[bookmarks]{hyperref}
+\usepackage[bookmarks, draft=false]{hyperref}
 \usepackage{bookmark}
 \usepackage{geometry}
 \usepackage{layout}
@@ -22,15 +22,24 @@
 \usepackage[sort,numbers]{natbib}
 \usepackage[shortlabels]{enumitem}
 
-\usepackage{amssymb, amsmath, amsthm, amsxtra}
-\usepackage{stmaryrd}
+\usepackage{amssymb, amsmath, amsxtra}
+%\usepackage{stmaryrd}
 \usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage{harpoon}
+\usepackage[thmmarks, amsmath, hyperref]{ntheorem}
 \usepackage{proof}
 \usepackage{algorithmic}
 \usepackage{algorithm}
 \usepackage{listings}
-\usepackage{mathrsfs}
-\usepackage{harpoon}
 
 \usepackage[capitalize]{cleveref}
+\usepackage{ifdraft}
+\usepackage[obeyDraft]{todonotes}%
+
+\ifdraft{%
+    \usepackage{draftwatermark}
+}{%
+    \usepackage[disable]{todonotes}%
+}
 

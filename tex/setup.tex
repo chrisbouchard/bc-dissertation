@@ -32,3 +32,8 @@
 % PDF viewer what the text should be.
 \newcommand{\TitleListing}[1]{\texorpdfstring{\lstinline|#1|}{#1}}
 
+\ifdraft{%
+    \SetWatermarkText{DRAFT}
+    \SetWatermarkColor[gray]{0.9}
+}{}
+

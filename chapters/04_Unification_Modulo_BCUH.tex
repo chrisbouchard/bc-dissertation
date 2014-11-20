@@ -9,22 +9,23 @@ In this chapter, and in all subsequent chapters, we will assume that all
 unification problems are in standard form as described in \cref{sec:std-form}.
 With that in mind, we make the following definition:
 
+\setcounter{Theorem}{0}
 \begin{Definition}
     We partition the equations in a $(\BCUF)$-unification problem based on the
     sort of their left-hand variable. We write $\ListEq(\Prob)$ for the list
     equations of $\Prob$, and $\EltEq(\Prob)$ for the element equations.
 \end{Definition}
 
-It is worth noting that any unifier of $\Prob$ is a unifier of $\ListEq(\Prob)$
-and $\EltEq(\Prob)$.
+It is worth noting that any unifier of $\Prob$ is a unifier of every subset of
+$\Prob$, in particular $\ListEq(\Prob)$ and $\EltEq(\Prob)$.
 
 \section{$\BC$-Dependency Graph}
 
 Recall that for a unification problem $\Prob$, we can define the dependency
 graph $\DepGraph(\Prob)$ whose nodes are the variables in $\Prob$ and whose
 edges are defined by the equations of $\Prob$. When $\Prob$ is a
-$(\BCUF)$-unification problem, we define several relations on the variables
-of $\Prob$.
+$(\BCUF)$-unification problem, we define several relations on the variables of
+$\Prob$.
 
 \begin{Definition}
     Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Vl{u}$ and
@@ -48,13 +49,13 @@ of $\Prob$.
        {({\Gt{\Cons}} \cup {\Sym{\Bc}})^*} \]
     In other words, if $\Vl{u}$ and $\Vl{v}$ are variables in $\Var(\Prob)$,
     then $\Vl{u} \Gt{\Len} \Vl{v}$ if and only if $\Vl{u}$ is ``strictly longer
-    than'' $\Vl{v}$.
+    than'' $\Vl{v}$ in every unifier of $\Prob$.
 \end{Definition}
 
 \section{The $\Nonnil$ Set}
 
 Some of the inferences in our algorithm depend on knowing if a variable could
-be assigned $\Nil$ in a solution or not. Given a unification problem $\Prob$,
+be assigned $\Nil$ in a unifier or not. Given a unification problem $\Prob$,
 we compute a set $\Nonnil$ of variables that cannot be assigned $\Nil$ in
 \emph{any} unifier of $\Prob$.
 
@@ -82,7 +83,7 @@ rules.
 
 To simplify the definitions of the inference rules, we assume that any relation
 defined in terms of a unification problem (e.g., the condition of rule
-\ref{inf:nil-soln-3}) refers to the problem in the premise of the rule. We
+\InfRef{nil-soln-3}) refers to the problem in the premise of the rule. We
 split $\INF\BC$ into three sections: General list inference rules (L1--L3),
 $\BC$-specific inference rules (BC1--BC9), and failure inference rules
 (F1--F2).
@@ -90,7 +91,7 @@ $\BC$-specific inference rules (BC1--BC9), and failure inference rules
 \subsection{List Inference Rules}
 
 First are the general list inference rules. These rules are all deterministic.
-Inference rules \ref{inf:triv-elim} and \ref{inf:var-elim} are the only rules
+Inference rules \InfRef{triv-elim} and \InfRef{var-elim} are the only rules
 in $\INF\BC$ that potentially modify element equations --- since the variables
 are untyped, these rules can apply to either list or element equations.
 
@@ -227,9 +228,324 @@ element.
         \]
 \end{enumerate}
 
-\section{Soundness of $\INF\BC$}
 
-Hello world
+
+\section{Soundness and Completeness of $\INF\BC$}
+
+\begin{Lemma}\label{lemma:infl-dag-solved}
+    Let $\Prob$ be a $(\BCUF)$-unification problem such that $\INF\BC$ is
+    not applicable. Then $\ListEq(\Prob)$ is in dag-solved form.
+\end{Lemma}
+
+\begin{proof}
+    Suppose $\ListEq(\Prob)$ were not in dag-solved form. Then either there
+    is a variable that occurs on the left-hand side of two different equations,
+    or there is a cycle in the equations such that they cannot be ordered.
+
+    In the fist case, there are a few possibilities for the peak:
+    \begin{itemize}[align=left]
+        \item[$\Cons/\Cons$:] Inference rule \InfRef{cancel-cons} is
+            applicable.
+        \item[$\Cons/\Nil$:] Inference rule \InfRef{size-conflict} is
+            applicable.
+        \item[$\Bc/\Cons$:] Inference rule \InfRef{splitting} is applicable.
+        \item[$\Bc/\Nil$:] Inference rule \InfRef{nil-soln-1} is applicable.
+        \item[$\Bc/\Bc$:] Either of the deterministic inference rules
+            \InfRef{semi-cancel-bc} or \InfRef{push-bc-below}, or one of the
+            nondeterministic inference rules
+            \InfRef{nil-soln-nondet}--\InfRef{cancel-bc-nondet}, is
+            applicable.
+        \item[$\Nil/\Nil$:] This case is not possible, since $\Prob$ is a set
+            and $\Nil$ is a constant.
+    \end{itemize}
+    For each possibility an inference rule from $\INF\BC$ is be applicable, so
+    there cannot be a peak.
+
+    In the second case, there is a cycle among the list equations such that
+    they cannot be ordered. Without loss of generality, we will assume that
+    this cycle contains no equations with variable right-hand sides (i.e.,
+    equations of the form $\Vl{u} \ueq \Vl{v}$), because otherwise we could
+    apply rule \InfRef{var-elim}. If the cycle contains no $\Cons$-equations,
+    then we can apply rule \InfRef{nil-soln-3}. If the cycle does contain
+    $\Cons$-equations, then we can apply rule \InfRef{occurs-check}. Thus a
+    rule from $\INF\BC$ would be applicable, and there cannot be a cycle.
+
+    In both cases, a rule from $\INF\BC$ is applicable to $\Prob$, which is
+    a contradiction. Thus $\ListEq(\Prob)$ must be in dag-solved form.
+\end{proof}
+
+\begin{Theorem}[Soundness of $\INF\BC$]\label{thm:inf-bc-sound}
+    Let $\Prob$ and $\Prob'$ be $(\BCUF)$-unification problems such that $\Prob
+    \InfTo[*]{\INF\BC} \Prob'$, and let $\Unifier$ be a unifier of $\Prob'$.
+    Then $\Unifier$ is a unifier of $\Prob$.
+\end{Theorem}
+
+\begin{proof}
+    The soundness of $\INF\BC$ follows from the soundness of all its inference
+    rules. Since $\Prob \InfTo[*]{\INF\BC} \Prob'$, there is some $n$ such that
+    $\Prob \InfTo[n]{\INF\BC} \Prob'$. We will prove the theorem by induction
+    on $n$.
+
+    In the base case when $n = 0$, we have that $\Prob = \Prob'$. So the
+    theorem holds trivially.
+
+    In the inductive step, suppose the theorem holds for all $\Prob$ and
+    $\Prob'$ such that $\Prob \InfTo[n-1]{\INF\BC} \Prob'$. Since $n > 0$, we
+    know there must be some problem $\Prob''$ such that $\Prob \InfTo{\INF\BC}
+    \Prob'' \InfTo[n-1]{\INF\BC} \Prob'$, and by our inductive hypothesis,
+    $\Unifier$ is a unifier of $\Prob''$. Since all the inference rules of
+    $\INF\BC$ are sound, $\Unifier$ must be a unifier of $\Prob$ and the
+    theorem is proven.
+\end{proof}
+
+\begin{Lemma}\label{lemma:inf-bc-complete}
+    Let $\Prob$ be a $(\BCUF)$-unification problem with a peak at a list
+    variable, and let $\Unifier$ be a unifier of $\Prob$. Then $\Prob
+    \InfTo{\INF\BC} \Prob'$ such that $\Unifier$ is a unifier of $\Prob'$.
+\end{Lemma}
+
+\begin{proof}
+    If there is a peak at a list variable, there are three cases:
+    $\Cons/\Cons$, $\Cons/\Bc$, or $\Bc/\Bc$. In the first two cases, there are
+    deterministic rules that always apply: \InfRef{cancel-cons} and
+    \InfRef{splitting}, respectively. If there is a deterministic rule in
+    $\INF\BC$ that is applicable, then the proof follows from the fact that
+    deterministic rules preserve the set of unifiers. So we assume that no
+    deterministic rule is applicable, and the only remaining case is a
+    $\Bc/\Bc$-peak.
+
+    If $\Prob$ has a $\Bc/\Bc$-peak, then $\Prob = \Prob'' \uplus \{ \Vl{u}
+    \ueq \Bc(\Ve{v}, \Vl{w}), \, \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}) \}$ for some
+    variables $\Vl{u}$, $\Ve{v}$, $\Vl{w}$, $\Ve{x}$, and $\Vl{y}$, and some
+    subproblem $\Prob''$. So,
+    \[ \Unifier(\Bc(\Ve{v}, \Vl{w})) \,=\, \Bc(\Unifier(\Ve{v}), \Unifier(\Vl{w}))
+    \,\EqualsBCF\, \Unifier(\Vl{u}) \,\EqualsBCF\, \Bc(\Unifier(\Ve{x}),
+    \Unifier(\Vl{y})) \,=\, \Unifier(\Bc(\Ve{x}, \Vl{y})). \]
+    By \cref{cor:bc-preserve-cons}, $\Unifier(\Vl{u})$, $\Unifier(\Vl{w})$, and
+    $\Unifier(\Vl{y})$ all have the same length, so we have two cases to
+    consdier: either they are all nil, or they are all nonnil.
+
+    If they are all nil, we can apply rule \InfRef{nil-soln-nondet} to obtain
+    a problem $\Prob' = \Prob'' \uplus \{ \Vl{u} \ueq \Nil, \, \Vl{w} \ueq
+    \Nil, \, \Vl{y} \ueq \Nil \}$. Clearly, then, $\Unifier$ is a unifier of
+    $\Prob'$. If they are all nonnil, we can use the conditional
+    semicancellativity of $\Bc$ from \cref{thm:bc-semi-cancel} to see that
+    $\Unifier(\Ve{v}) \EqualsBCF \Unifier(\Ve{x})$ if and only if
+    $\Unifier(\Vl{w}) \EqualsBCF \Unifier(\Vl{y})$. If both equivalences hold,
+    then we can apply rule \InfRef{cancel-bc-nondet} to obtain a problem
+    $\Prob' = \Prob'' \uplus \{ \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \, \Ve{x} \ueq
+    \Ve{v}, \, \Vl{y} \ueq \Vl{w} \}$, and $\Unifier$ is a unifier of $\Prob'$.
+
+    In the remaining case, $\Unifier(\Vl{u})$, $\Unifier(\Vl{w})$, and
+    $\Unifier(\Vl{y})$ are all nonnil, $\Unifier(\Ve{v}) \not\EqualsBCF
+    \Unifier(\Ve{x})$, and $\Unifier(\Vl{w}) \not\EqualsBCF \Unifier(\Vl{y})$.
+    In this case,
+    \begin{align*}
+        \Unifier(\Vl{u}) &\EqualsBCF \Cons(t_{11}, t_{12}) \\
+        \Unifier(\Vl{w}) &\EqualsBCF \Cons(t_{21}, t_{22}) \\
+        \Unifier(\Vl{y}) &\EqualsBCF \Cons(t_{31}, t_{32})
+    \end{align*}
+    By \cref{cor:bc-eq-tail}, we see that $t_{22} \EqualsBCF t_{32}$. We can
+    apply rule \InfRef{non-nil-nondet} to obtain a problem $\Prob'$ such that
+    \begin{align*} \Prob' \; = \; \Prob'' \uplus \{ \,
+        &\Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \,
+        \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \,
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\
+        &\Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \,
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \,
+        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x})
+        \, \}
+    \end{align*}
+    and again, $\Unifier$ is a unifier of $\Prob'$. In all cases $\Unifier$ is
+    a unifier of $\Prob'$, and the lemma is proven.
+\end{proof}
+
+\begin{Theorem}[Completeness of $\INF\BC$]\label{thm:inf-bc-complete}
+    Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Unifier$ be a
+    unifier of $\Prob$. Then $\Prob \InfTo[*]{\INF\BC} \Prob'$ such that
+    $\Unifier$ is a unifier of $\Prob'$.
+\end{Theorem}
+
+\begin{proof}
+    Since the relation $\InfTo{\INF\BC}$ is well-founded, there is a bound $n$
+    such that all of the $\InfTo{\INF\BC}$-normal forms of $\Prob$ can be
+    reached in $n$ steps or fewer. We will prove this theorem by induction on
+    $n$.
+
+    We first consider the base case, when $n = 0$. Thus $\Prob
+    \InfTo[*]{\INF\BC} \Prob$ and the theorem holds trivially.
+
+    In the inductive step, we assume the theorem holds for any problem
+    $\Prob''$ such that all $\InfTo{\INF\BC}$-normal forms of $\Prob''$ can be
+    reached in $n - 1$ steps or fewer. By \cref{lemma:inf-bc-complete}, there
+    is such a problem $\Prob''$ such that $\Prob \InfTo{\INF\BC} \Prob''$ and
+    $\Unifier$ is a unifier of $\Prob''$. By our inductive hypothesis, there is
+    a problem $\Prob'$ such that $\Prob'' \InfTo[*]{\INF\BC} \Prob'$ and
+    $\Unifier$ is a unifier of $\Prob'$. Thus $\Prob \InfTo[*]{\INF\BC} \Prob'$
+    and the theorem follows.
+\end{proof}
+
+\begin{Theorem}\label{thm:inf-bc-mgu-complete}
+    Let $\Prob$ and $\Prob'$ be $(\BCUF)$-unification problems such that $\Prob
+    \InfTo[*]{\INF\BC} \Prob'$, and let $\Unifier$ be a most general unifier of
+    $\Prob$ and a unifier of $\Prob'$. Then $\Unifier$ is a most general
+    unifier of $\Prob'$.
+\end{Theorem}
+
+\begin{proof}
+    Suppose $\Unifier$ were not a most general unifier of $\Prob'$. Then there
+    is some other unifier $\Unifier'$ of $\Prob'$ such that $\Unifier
+    \LessGeneralThan \Unifier'$. By the soundness of $\INF\BC$ shown in
+    \cref{thm:inf-bc-sound}, $\Unifier'$ is also a unifier of $\Prob$. This is
+    a contradiction, since $\Unifier$ is a most general unifier of $\Prob$. Thus
+    $\Unifier$ is a most general unifier of $\Prob'$.
+\end{proof}
+
+% \begin{Lemma}\label{lemma:inf-bc-mgu-sound}
+%     Let $\Prob$ and $\Prob'$ be $(\BCUF)$-unification problems such that $\Prob
+%     \InfTo{\INF\BC} \Prob'$, and let $\Unifier$ be a most general unifier of
+%     $\Prob'$. Then $\Unifier$ is a most general unifier of $\Prob$.
+% \end{Lemma}
+%
+% \begin{proof}
+%     Suppose $\Unifier$ is not a most general unifier of $\Prob$. Then there is
+%     a unifier $\MGU$ of $\Prob$ such that $\Unifier \LessGeneralThan \MGU$.
+%     Since $\Prob \InfTo{\INF\BC} \Prob'$, there is an inference rule $\rho$
+%     from $\INF\BC$ such that $\Prob \InfTo{\rho} \Prob'$. If $\rho$ were a
+%     deterministic rule, then $\MGU$ would also a unifier of $\Prob'$, which is
+%     a contradiction. Thus $\rho$ must be one of the nondeterministic rules
+%     \InfRef{nil-soln-nondet}, \InfRef{non-nil-nondet}, or
+%     \InfRef{cancel-bc-nondet}.
+%
+%     Let $\X := \Var(\Unifier) \, \cup \, \Var(\MGU)$. Let $\AltSubst[\rho]$ be
+%     the substitution such that matches $\Prob$ to the premise of $\rho$ and
+%     $\Prob'$ to its conclusion. Let $\X_\rho := \Var(\AltSubst[\rho])$. We can
+%     partition the unifiers $\Unifier$ and $\MGU$ as follows:
+%     \begin{align*}
+%         \Unifier &= \Sub{\Unifier}{(\X \setminus \X_\rho)} \uplus \Sub{\Unifier}{\X_\rho} \\
+%         \MGU &= \Sub{\MGU}{(\X \setminus \X_\rho)} \uplus \Sub{\MGU}{\X_\rho}
+%     \end{align*}
+%     We can assume without loss of generality that $\Sub{\Unifier}{(\X \setminus
+%     \X_\rho)} = \Sub{\MGU}{(\X \setminus \X_\rho)}$, because if $\Sub{\MGU}{(\X
+%     \setminus \X_\rho)}$ were more general than $\Sub{\Unifier}{(\X \setminus
+%     \X_\rho)}$ then $\Sub{\MGU}{(\X \setminus \X_\rho)} \cup
+%     \Sub{\Unifier}{\X_\rho}$ would be a more general unifier of $\Prob'$ than
+%     $\sigma$. So we will write
+%     \begin{align*}
+%         \Unifier &= \Unifier[0] \uplus \Sub{\Unifier}{\X_\rho} \\
+%         \MGU &= \Unifier[0] \uplus \Sub{\MGU}{\X_\rho}
+%     \end{align*}
+%
+%     \todo[inline]{Finish this proof!}
+% \end{proof}
+
+At this point, we would like to go on to prove the converse, i.e., that if
+$\Prob \InfTo{\INF\BC} \Prob'$ and $\Unifier$ is a most general unifier of
+$\Prob'$, then $\Unifier$ is a most general unifier of $\Prob$. Unfortunately,
+this is not the case. Consider the following counterexample.
+
+\begin{Example}
+    We define a unification problem $\Prob$ as follows:
+    \begin{align*}
+        \Prob := \{ \,
+        & \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+        \Vl{u} \ueq \Bc(\Ve{x}, \Vl{y}), \;
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \\
+        & \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \;
+        \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+        \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \\
+        & \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) \, \}
+    \end{align*}
+    If we apply rule \InfRef{cancel-bc-nondet}, we obtain the following
+    problem $\Prob[1]$.
+    \begin{align*}
+        \Prob[1] := \{ \,
+        & \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \\
+        & \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+        \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \\
+        & \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}), \;
+        \Ve{x} \ueq \Ve{v}, \;
+        \Vl{y} \ueq \Vl{w} \, \}
+    \end{align*}
+    We now apply deterministic rules to transform $\Prob[1]$ into dag-solved form.
+    \begin{align*}
+        \Prob[1] \InfTo[*]{\text{\InfRef{var-elim}}} \{ \,
+        & \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \\
+        & \Vl{w} \ueq \Cons(\Ve{y}', \Vl{z}), \;
+        \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \\
+        & \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{v}), \;
+        \Ve{x} \ueq \Ve{v}, \;
+        \Vl{y} \ueq \Vl{w} \, \}
+        \displaybreak[0] \\[1ex]
+        %
+        \hphantom{\Prob[1]} \InfTo{\text{\InfRef{cancel-cons}}} \{ \,
+        & \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \\
+        & \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{v}), \\
+        & \Ve{x} \ueq \Ve{v}, \;
+        \Vl{y} \ueq \Vl{w}, \;
+        \Ve{y}' \ueq \Ve{w}' \, \}
+        \displaybreak[0] \\[1ex]
+        %
+        \hphantom{\Prob[1]} \InfTo{\text{\InfRef{var-elim}}} \{ \,
+        & \Vl{u} \ueq \Bc(\Ve{v}, \Vl{w}), \;
+        \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \\
+        & \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+        \Ve{x} \ueq \Ve{v}, \;
+        \Vl{y} \ueq \Vl{w}, \\
+        & \Ve{y}' \ueq \Ve{w}' \, \}
+        \displaybreak[0] \\[1ex]
+        %
+        \hphantom{\Prob[1]} \InfTo{\text{\InfRef{splitting}}} \{ \,
+        & \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \;
+        \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \\
+        & \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+        \Ve{x} \ueq \Ve{v}, \;
+        \Vl{y} \ueq \Vl{w}, \;
+        \Ve{y}' \ueq \Ve{w}' \, \}
+    \end{align*}
+    The resulting problem, which we shall call $\hat{\Prob}_1$, has the
+    following most general unifier.
+    \begin{align*}
+        \Mgu(\hat{\Prob}_1) := \{ \,
+        & \Vl{u} \mapsto \Cons(\Ff(\Ve{w}', \Ve{v}), \Bc(\Ff(\Ve{w}', \Ve{v}), \Vl{z})), \\
+        & \Vl{u}'' \mapsto \Bc(\Ff(\Ve{w}', \Ve{v}), \Vl{z}), \;
+        \Vl{w} \mapsto \Cons(\Ve{w}', \Vl{z}), \\
+        & \Vl{y} \mapsto \Cons(\Ve{w}', \Vl{z}), \;
+        \Ve{u} \mapsto \Ff(\Ve{w}', \Ve{v}), \\
+        & \Ve{x} \mapsto \Ve{v}, \;
+        \Ve{y}' \mapsto \Ve{w}' \, \}
+    \end{align*}
+
+    However, if we had applied the deterministic rule \InfRef{push-bc-below} to
+    $\Prob$ from the start, we would have instead obtained the following problem
+    $\Prob[2]$.
+    \begin{align*}
+        \Prob[2] := \{ \,
+        & \Vl{u} \ueq \Cons(\Ve{u}', \Vl{u}''), \;
+        \Vl{w} \ueq \Cons(\Ve{w}', \Vl{z}), \;
+        \Vl{y} \ueq \Cons(\Ve{y}', \Vl{z}), \\
+        & \Vl{u}'' \ueq \Bc(\Ve{u}', \Vl{z}), \;
+        \Ve{u}' \ueq \Ff(\Ve{w}', \Ve{v}), \;
+        \Ve{u}' \ueq \Ff(\Ve{y}', \Ve{x}) \, \}
+    \end{align*}
+
+    \todo[inline]{Where do we go from here?}
+\end{Example}
+
 
 \section{Termination of $\INF\BC$}
 
@@ -245,7 +561,7 @@ variables.
 \end{Definition}
 
 Variables are related by $\Sym{\EqLabel}$ are equivalent in the sense that they
-must be assigned equal values in any solution.
+must be assigned equal values in any unifier.
 
 \begin{Definition}
     Let $\Prob$ be a $(\BCUF)$-unification problem. We define $\Sym{\beta}$ to
@@ -282,8 +598,9 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     Let $\Prob$ be a $(\BCUF)$-unification problem. For any problem $\Prob'$
     such that $\Prob \InfTo[*]{\INF\BC} \Prob'$,
     \[ 0 \; \leq \;
-       |\Var(\Prob') / {\Sym{\beta}}| - |\Var(\Prob) / {\Sym{\beta}}| \; \leq \;
-       |\Var(\Prob) / {\Sym{\beta}}| \cdot |\Var(\Prob)| \]
+       \left(|\Var(\Prob') / {\Sym{\beta}}| - |\Var(\Prob) / {\Sym{\beta}}|\right)
+       \; \leq \;
+       \left(|\Var(\Prob) / {\Sym{\beta}}| \cdot |\Var(\Prob)|\right). \]
 \end{Lemma}
 
 \begin{proof}
@@ -294,7 +611,7 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     new equivalence classes are added.
     The only rules in $\INF\BC$ that increase the number of $\Cons$ edges, and
     thus potentially the number of $\Sym{\beta}$-equivalence classes, are
-    \ref{inf:push-bc-below}, \ref{inf:splitting}, and \ref{inf:non-nil-nondet}.
+    \InfRef{push-bc-below}, \InfRef{splitting}, and \InfRef{non-nil-nondet}.
 
     In the first case, since $\Vl{u}$ is in $\Nonnil$, $\Vl{u}$ and $\Vl{u}''$
     must be elements of existing $\Sym{\beta}$-equivalence classes. Since
@@ -325,16 +642,17 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
 
 \begin{proof}
     The relation $\Gt[+]{\Cons}$ is by its definition transitive. Since failure
-    rule \ref{inf:occurs-check} does not apply, $\Gt[+]{\Cons}$ is also
+    rule \InfRef{occurs-check} does not apply, $\Gt[+]{\Cons}$ is also
     irreflexive. Thus it is asymmetric and we need only show well-foundedness.
 
     By \cref{lemma:equiv-class-bound} the number of $\Sym{\beta}$-equivalence
-    classes is finite, so if $\Gt[+]{\Cons}$ were not well-founded, there would
-    have to be an equivalence class $\EqClass{\Vl{u}}{\beta}$ such that
+    classes is finite. Suppose $\Gt[+]{\Cons}$ were not well-founded. There
+    would have to be an equivalence class $\EqClass{\Vl{u}}{\beta}$ such that
     $\EqClass{\Vl{u}}{\beta} \Gt[+]{\Cons} \EqClass{\Vl{u}}{\beta}$. But then
     there would be a variable $\Vl{u} \in \EqClass{\Vl{u}}{\beta}$ such that
-    $\Vl{u} \Gt{\Len} \Vl{u}$ and \ref{inf:occurs-check} would apply. Thus
-    $\Gt[+]{\Cons}$ is well-founded on $\Sym{\beta}$-equivalence classes.
+    $\Vl{u} \Gt{\Len} \Vl{u}$ and \InfRef{occurs-check} would apply, which is
+    a contradiction. Thus $\Gt[+]{\Cons}$ is well-founded on
+    $\Sym{\beta}$-equivalence classes.
 \end{proof}
 
 \begin{Lemma}\label{lemma:total-connected-comp}
@@ -357,7 +675,7 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     \EqClass{\Vl{v}}{\beta}$ or $\EqClass{\Vl{v}}{\beta} \Gt[+]{\Cons}
     \EqClass{\Vl{u}}{\beta}$, respectively. So, if $\BetaEqC{\Vl{u}}$ and
     $\BetaEqC{\Vl{v}}$ are incomparable, then either $\BetaEqC{\Vl{u}}
-    \Gt[+]{\Cons} \BetaEqC{\Vl{w}} \Lt[+]{\Cons} \BetaEqC{\Vl{v}}$, or
+    \Gt[+]{\Cons} \BetaEqC{\Vl{w}} \Lt[+]{\Cons} \BetaEqC{\Vl{v}}$ or
     $\BetaEqC{\Vl{u}} \Lt[+]{\Cons} \BetaEqC{\Vl{w}} \Gt[+]{\Cons}
     \BetaEqC{\Vl{v}}$.
 
@@ -398,45 +716,47 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     way, so that $\ConsDepth(\Vl{u}) := \ConsDepth(\EqClass{\Vl{u}}{\beta})$.
 \end{Definition}
 
-\begin{Theorem}\label{lemma:inf-bc-terminates}
+\begin{Theorem}[Termination of $\INF\BC$]\label{theorem:inf-bc-terminates}
     The relation $\InfTo{\INF\BC}$ is well-founded.
 \end{Theorem}
 
 \begin{proof}
     Suppose $\InfTo{\INF\BC}$ is not well-founded. Then there must be an
     infinitely descending chain
-    \[ \Prob_0 \InfTo{\INF\BC} \Prob_1 \InfTo{\INF\BC} \dotsb \InfTo{\INF\BC}
-       \Prob_i \InfTo{\INF\BC} \dotsb \]
+    \[ \Prob[0] \InfTo{\INF\BC} \Prob[1] \InfTo{\INF\BC} \dotsb \InfTo{\INF\BC}
+    \Prob[i] \InfTo{\INF\BC} \dotsb \]
     Since there are a finite number of inference rules, at least one inference
     rule from $\INF\BC$ must be applied infinitely many times. Clearly this
     rule must not be a failure rule, since those rules cause immediate
     termination.
 
     For the remaining rules, consider the measure function $\phi\colon
-    \ProbType \to \Nat^4$ given by:
+    \ProbType{\BCUF} \to \Nat^4$ from $(\BCUF)$-unification problems to
+    quadruples of natural numbers given by:
     \begin{align*}
-        \phi(\Prob_i) &:= \left(
-            \text{\textit{free-classes}}, \;
-            \text{\textit{free-depth}}, \;
-            |\DepGraph(\Prob_i)|, \;
-            |\Prob|
+        \phi(\Prob[i]) &:= \left(
+            \FreeClasses, \;
+            \FreeDepth, \;
+            |\DepGraph(\Prob[i])|, \;
+            |\Prob[i]|
         \right)
         \intertext{where}
-        \text{\textit{free-classes}} &:= m - |\Var(\Prob_i)/{\Sym{\beta}}| \\[4pt]
-        \text{\textit{free-depth}} &:= \sum \, \{
-            m - \ConsDepth(\Vl{u}) \mid
-            (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob_i
+        \FreeClasses &:= \MaxClasses - |\Var(\Prob[i])/{\Sym{\beta}}| \\[4pt]
+        \FreeDepth &:= \sum \, \{
+            \MaxClasses - \ConsDepth(\Vl{u}) \mid
+            (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob[i]
         \} \\[4pt]
-        m &:= |\Var(\Prob_0)/{\Sym{\beta}}| \cdot (1 + |\Var(\Prob_0)|)
+        \MaxClasses &:= |\Var(\Prob[0])/{\Sym{\beta}}| \cdot
+            (1 + |\Var(\Prob[0])|)
     \end{align*}
 
-    The first component, \textit{free-classes}, measures the number of number
-    of unused $\Sym{\beta}$-equivalence class ``slots''. The second component,
-    \textit{free-depth}, is intuitively a measure of how many times a
-    $\Bc$-edge can be ``lowered'' by rules like \ref{inf:splitting}. Note that
-    $m$, which measures the maximum number of $\Sym{\beta}$-equivalence
-    classes, is fixed by the initial input probem $\Prob_0$ thanks to the bound
-    given by \cref{lemma:equiv-class-bound}.
+    The first component, $\FreeClasses$, measures the number of number of
+    unused $\Sym{\beta}$-equivalence class ``slots''. The second component,
+    $\FreeDepth$, is intuitively a measure of how many times a $\Bc$-edge can
+    be ``lowered'' by rules like \InfRef{splitting}. Note that $\MaxClasses$,
+    which measures the maximum number of $\Sym{\beta}$-equivalence classes, is
+    fixed by the initial input probem $\Prob[0]$ thanks to the bound given by
+    \cref{lemma:equiv-class-bound}.
 
     The function $\phi$ is only defined when $\ConsDepth$ is defined --- i.e.,
     only when $\Gt[+]{\Cons}$ is a well-founded strict partial order on the
@@ -444,130 +764,192 @@ same level on $\Cons$ ``chains''. We will now make these ideas more formal.
     this is the case according to \cref{lemma:gt-cons-partial-order}.
 
     For the remaining inference rules in $\INF\BC$, we will show that if
-    $\Prob_i \InfTo{\INF\BC} \Prob_{i+1}$ then $\phi(\Prob_i) >_\Lex
-    \phi(\Prob_{i+1})$, where $>_\Lex$ is the lexicographic order on $\Nat^4$
-    given by $>$ on $\Nat$.
+    $\Prob[i] \InfTo{\INF\BC} \Prob[i+1]$ then $\phi(\Prob[i]) \Gt{\Lex}
+    \phi(\Prob[i+1])$, where $\Gt{\Lex}$ is the lexicographic order on $\Nat^4$
+    induced by $\Gt{}$ on $\Nat$.
 
     \begin{itemize}[align=left]
-        \item[(\ref{inf:triv-elim})] This rule preserves the first three
+        \item[(\InfRef{triv-elim})] This rule preserves the first three
             components and decreases the fourth.
 
-        \item[(\ref{inf:var-elim}--\ref{inf:cancel-cons})] These rules preserve
+        \item[(\InfRef{var-elim}--\InfRef{cancel-cons})] These rules preserve
             or decrease the first two components and decrease the third.
     \end{itemize}
 
     \begin{itemize}[align=left]
-        \item[(\ref{inf:nil-soln-1}--\ref{inf:semi-cancel-bc})] These rules all
+        \item[(\InfRef{nil-soln-1}--\InfRef{semi-cancel-bc})] These rules all
             preserve or decrease the first two components and decrease the
             third.
 
-        \item[(\ref{inf:push-bc-below}--\ref{inf:splitting})] While these rules
+        \item[(\InfRef{push-bc-below}--\InfRef{splitting})] While these rules
             do add several new variables and edges to the dependency graph,
             they add no new $\Sym{\beta}$-equivalence classes, and they remove
             a $\Bc$-equation and add a new one with a variable that has a
-            greater $\Cons$-depth. Thus \ref{inf:push-bc-below} and
-            \ref{inf:splitting} preserve the first component and decrease the
+            greater $\Cons$-depth. Thus \InfRef{push-bc-below} and
+            \InfRef{splitting} preserve the first component and decrease the
             second.
 
-        \item[(\ref{inf:nil-soln-nondet})] This rule behaves the same as
-            \ref{inf:nil-soln-1}--\ref{inf:semi-cancel-bc}, preserving or
+        \item[(\InfRef{nil-soln-nondet})] This rule behaves the same as
+            \InfRef{nil-soln-1}--\InfRef{semi-cancel-bc}, preserving or
             decreasing the first two components and decreasing the third.
 
-        \item[(\ref{inf:non-nil-nondet})] This rule either behaves the same as
-            \ref{inf:push-bc-below}, preserving the first component and
+        \item[(\InfRef{non-nil-nondet})] This rule either behaves the same as
+            \InfRef{push-bc-below}, preserving the first component and
             decreasing the second, or it creates a new
             $\Sym{\beta}$-equivalence class and decreases the first component.
 
-        \item[(\ref{inf:cancel-bc-nondet})] This rule behaves the same as
-            \ref{inf:semi-cancel-bc}, preserving or decreasing the first two
+        \item[(\InfRef{cancel-bc-nondet})] This rule behaves the same as
+            \InfRef{semi-cancel-bc}, preserving or decreasing the first two
             components and decreasing the third.
     \end{itemize}
 
     Each non-failure inference rule in $\INF\BC$ causes the measure of the
-    problem to strictly decrease. Since $>_\Lex$ is well-founded on $\Nat^4$,
+    problem to strictly decrease. Since $\Gt{\Lex}$ is well-founded on $\Nat^4$,
     this cannot continue infinitely, so no rule in $\INF\BC$ can be applied
     infinitely many times. Thus $\InfTo{\INF\BC}$ is well-founded.
 \end{proof}
 
-\section{Algorithm $\Alg{\BC}$}\label{sec:bc-algorithm}
+
+
+\section{Algorithm $\AlgBC$}\label{sec:bc-algorithm}
 
 Our algorithm is split into three phases. First we use the inference system
 $\INF\BC$ to transform the list equations of a $(\BCUF)$-unification problem
 $\Prob$ into dag-solved form. We then pass the element equations to an
 algorithm for the $\FF$-unification problem. Finally, we combine the list
-equations with the element unifier to produce a solution.
+equations with the element unifier to produce a unifier.
 
-\subsection{Phase 1: Solving List Equations}
+\subsection*{Input and Output}
+
+The input of our algorithm is a $(\BCUF)$-unification problem $\Prob$. The
+output is a unifier $\Unifier$ of $\Prob$, or $\Fail$ if no unifier exists.
+
+\subsection*{Phase 1: Solving List Equations}
 
 The first phase of the algorithm is to apply $\INF\BC$ to the input problem
 exhaustively. Whenever we have a choice among nondeterministic rules, we
-guess a rule to apply.
+guess a rule to apply as follows:
+\begin{enumerate}[(1)]
+    \item If one of F1 or F2 is applicable to $\Prob$, pick that rule.
+    \item Otherwise, if one of L1--L3 is applicable, pick the lowest
+        numbered applicable rule.
+    \item Otherwise, if one of BC1--BC6 is applicable, pick the lowest
+        numbered applicable rule.
+    \item Otherwise, if one of BC7--BC9 is applicable, guess one of
+        the rules to apply.
+    \item Otherwise terminate.
+\end{enumerate}
 
-\begin{Definition}
-    Let $\Prob$ be a $(\BCUF)$-unification problem. We define a strategy
-    $S_\BC$ for $\INF\BC$ as follows:
-    \begin{enumerate}[(1)]
-        \item If one of F1 or F2 is applicable to $\Prob$, pick that rule.
-        \item Otherwise, if one of L1--L3 is applicable, pick the lowest
-            numbered applicable rule.
-        \item Otherwise, if one of BC1--BC6 is applicable, pick the lowest
-            numbered applicable rule.
-        \item Otherwise, if one of BC7--BC9 is applicable, guess one of
-            the rules to apply.
-        \item Otherwise terminate.
-    \end{enumerate}
-\end{Definition}
+Thus we reduce $\Prob$ to a problem $\Prob'$ such that $\Prob
+\InfTo[!]{\INF\BC} \Prob'$, and by \cref{lemma:infl-dag-solved},
+$\ListEq(\Prob')$ is in dag-solved form. Let $\Unifier[\ListEq]$ be the most
+general unifier of $\ListEq(\Prob')$ as given in \cref{sec:std-form}. At this
+point, we can consider the list equations ``solved'' and shift our attention to
+the element equations.
 
-\begin{Lemma}
-    Let $\Prob$ be a $(\BCUF)$-unification problem such that $\INF\BC$ is
-    not applicable. Then $\ListEq(\Prob)$ is in dag-solved form.
-\end{Lemma}
+If we reach $\Fail$, we return $\Fail$ and stop. Note that our algorithm is
+nondeterministic, so one particular path may fail while another will
+successfully find a unifier. The algorithm can be made deterministic by
+implementing a backtracking search procedure.
+
+\subsection*{Phase 2: Solving Element Equations}
+
+In this phase of the algorithm we solve $\EltEq(\Prob')$. We assume that we
+have an algorithm $\AlgF$ for the $\FF$-unification problem. Recall that we can
+think of $\Alg{\FF}$ as a function from unification problems to sets of
+substitutions.  Since $\FF$ is an element theory, $\FF$-unification is
+finitary, so $\AlgF(\EltEq(\Prob'))$ will be finite. We nondeterministically
+guess a unifier $\Unifier[\EltEq]$ from $\AlgF(\EltEq(\Prob'))$.
+
+If $\AlgF(\EltEq(\Prob'))$ is empty, we return $\Fail$ and stop. Again, a
+different path through the algorithm could yield a unifier.
+
+\subsection*{Phase 3: Combining Results}
+
+Now we have our unifiers $\Unifier[\ListEq]$ and $\Unifier[\EltEq]$ of
+$\ListEq(\Prob')$ and $\EltEq(\Prob')$, respectively. We combine them into a
+single unifier $\Unifier := \Unifier[\EltEq] \Compose \Unifier[\ListEq]$. We
+then return this unifier and stop.
+
+
+
+\section{Soundness and Completeness of $\Alg{\BC}$}\label{sec:bc-sound-complete}
+
+\begin{Theorem}[Soundness of $\AlgBC$]
+    Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Unifier$ be a
+    substitution such that $\AlgBC(\Prob, \Unifier)$. Then $\Unifier$ is a
+    $(\BCUF)$-unifier of $\Prob$.
+\end{Theorem}
 
 \begin{proof}
-    Suppose $\ListEq(\Prob)$ were not in dag-solved form. Then either there
-    is a variable that occurs on the left-hand side of two different equations,
-    or there is a cycle in the equations such that they cannot be ordered.
-
-    In the fist case, there are a few possibilities for the peak, and for each
-    possibility an inference rule from $\INF\BC$ must be applicable:
-    \begin{itemize}[align=left]
-        \item[$\Cons/\Cons$:] Inference rule \ref{inf:cancel-cons} is applicable.
-        \item[$\Cons/\Nil$:] Inference rule \ref{inf:size-conflict} is
-            applicable.
-        \item[$\Bc/\Cons$:] Inference rule \ref{inf:splitting} is applicable.
-        \item[$\Bc/\Nil$:] Inference rule \ref{inf:nil-soln-1} is applicable.
-        \item[$\Bc/\Bc$:] Either of the deterministic inference rules
-            \ref{inf:semi-cancel-bc} or \ref{inf:push-bc-below}, or one of the
-            nondeterministic inference rules
-            \ref{inf:nil-soln-nondet}--\ref{inf:cancel-bc-nondet}, is
-            applicable.
-        \item[$\Nil/\Nil$:] This case is not possible, since $\Prob$ is a set
-            and $\Nil$ is a constant.
-    \end{itemize}
-
-    In the second case, there is a cycle among the list equations such that
-    they cannot be ordered. Without loss of generality, we will assume that
-    this cycle contains no equations with variable right-hand sides (i.e.,
-    equations of the form $\Vl{u} \ueq \Vl{v}$), because otherwise we could
-    apply rule \ref{inf:var-elim}. If the cycle contains no $\Cons$-equations,
-    then we can apply rule \ref{inf:nil-soln-3}. If the cycle does contain
-    $\Cons$-equations, then we can apply rule \ref{inf:occurs-check}.
-
-    In both cases, a rule from $\INF\BC$ is applicable to $\Prob$, which is
-    a contradiction. Thus $\ListEq(\Prob)$ must be in dag-solved form.
+    If $\AlgBC(\Prob, \Unifier)$, then $\Unifier = \Unifier[\EltEq] \Compose
+    \Unifier[\ListEq]$, where $\Prob \InfTo[!]{\INF\BC} \Prob'$, and
+    $\Unifier[\ListEq]$ and $\Unifier[\EltEq]$ are unifiers of
+    $\ListEq(\Prob')$ and $\EltEq(\Prob')$, respectively. Since $\Unifier$ is
+    an instance of $\Unifier[\ListEq]$, it is also a unifier of
+    $\ListEq(\Prob')$. Since its domain contains only list variables,
+    $\Unifier[\ListEq]$ is equivalent to $\Ident$ when restricted to element
+    variables. Thus $\Unifier$ is equivalent to $\Unifier[\EltEq]$ on element
+    variables and is a unifier of $\EltEq(\Prob')$. Since $\Prob' =
+    \ListEq(\Prob') \uplus \EltEq(\Prob')$, $\Unifier$ is a unifier of
+    $\Prob'$, so by the soundness of $\INF\BC$ from \cref{thm:inf-bc-sound},
+    $\Unifier$ is a unifier of $\Prob$.
 \end{proof}
 
-\subsection{Phase 2: Solving Element Equations}
+\begin{Theorem}[Completeness of $\AlgBC$]
+    Let $\Prob$ be a $(\BCUF)$-unification problem, and let $\Unifier$ be a
+    unifier of $\Prob$. Then $\AlgBC(\Prob, \Unifier')$ such that $\Unifier
+    \LessGeneralThan \Unifier'$.
+\end{Theorem}
 
-\subsection{Phase 3: Combining Results}
+\begin{proof}
+    If $\Unifier$ is a unifier of $\Prob$, then by the completeness of
+    $\INF\BC$ from \cref{thm:inf-bc-complete}, there is a problem $\Prob'$ such
+    that $\Prob \InfTo[!]{\INF\BC} \Prob'$ and $\Unifier$ is a unifier of
+    $\Prob'$. Our algorithm would find the most general unifier
+    $\Unifier[\ListEq]$ of $\ListEq(\Prob')$, and $\Unifier \LessGeneralThan
+    \Unifier[\ListEq]$. We would then guess a unifier $\Unifier[\EltEq]$ from
+    $\AlgF(\EltEq(\Prob'))$.
+\end{proof}
 
-\section{Soundness of $\Alg{\BC}$}\label{sec:bc-soundness}
-
-\section{Completeness of $\Alg{\BC}$}\label{sec:bc-completeness}
 
 \section{Termination of $\Alg{\BC}$}\label{sec:bc-termination}
 
+The termination of our algorithm follows directly from the termination of
+$\INF\BC$.
+
 \section{Runtime Analysis of $\Alg{\BC}$}\label{sec:bc-runtime-analysis}
+
+\begin{Theorem}
+    Let $\Prob$ and $\Prob'$ be $(\BCUF)$-unification problems such that
+    $|\Prob| = n$ and $\Prob \InfTo[!]{\INF\BC} \Prob'$. Then $\Prob
+    \InfTo[k]{\INF\BC} \Prob'$ such that $k < n^4$.
+\end{Theorem}
+
+\begin{proof}
+    In the proof of \cref{theorem:inf-bc-terminates} we defined a measure
+    function $\phi\colon \ProbType{\BCUF} \to \Nat^4$ from
+    $(\BCUF)$-unification problems to quadruples of natural numbers given by:
+    \begin{align*}
+        \phi(\Prob[i]) &:= \left(
+            \FreeClasses, \;
+            \FreeDepth, \;
+            |\DepGraph(\Prob[i])|, \;
+            |\Prob[i]|
+        \right)
+        \intertext{where}
+        \FreeClasses &:= \MaxClasses - |\Var(\Prob[i])/{\Sym{\beta}}| \\[4pt]
+        \FreeDepth &:= \sum \, \{
+            \MaxClasses - \ConsDepth(\Vl{u}) \mid
+            (\Vl{u} \ueq \Bc(\Ve{v}, \Vl{w})) \in \Prob[i]
+        \} \\[4pt]
+        \MaxClasses &:= |\Var(\Prob[0])/{\Sym{\beta}}| \cdot
+            (1 + |\Var(\Prob[0])|)
+    \end{align*}
+    In that proof, we showed that if $\Prob[i] \InfTo{\INF\BC} \Prob[i+1]$ then
+    $\phi(\Prob[i]) \Gt{\Lex} \phi(\Prob[i+1])$, where $\Gt{\Lex}$ is the
+    lexicographic order on $\Nat^4$ induced by $\Gt{}$ on $\Nat$.
+\end{proof}
 
 \section{Dependency Graph Transformations}\label{sec:dep-graph-trans}
 

@@ -21,7 +21,16 @@
 \newcommand{\XOR}{\mathcalorpdfstring{XOR}}
 \newcommand{\FF}{\mathcalorpdfstring{F}}
 \newcommand{\EQ}{\mathcalorpdfstring{E\hspace{-1pt}Q}}
-\newcommand{\Prob}{\mathcalorpdfstring{P}}
+
+\newcommand{\Prob}[1][]{\mathcalorpdfstring{P}_{#1}}
+\newcommand{\Subst}[1][]{{\sigma_{#1}^{}}}
+\newcommand{\AltSubst}[1][]{{\theta_{#1}^{}}}
+\newcommand{\Unifier}[1][]{\Subst[#1]}
+\newcommand{\MGU}[1][]{{\hat{\sigma}_{#1}^{}}}
+\newcommand{\EqTheory}[1][]{E_{#1}}
+\newcommand{\RSystem}[1][]{R_{#1}}
+
+\newcommand{\RBC}{\RSystem[\BC]}
 
 \newcommand{\BCUF}{\BC{} \texorpdfstring{\cup}{U} \FF}
 
@@ -35,7 +44,8 @@
 \newcommand{\EltEq}{\mathcal{E}}
 \newcommand{\ListEq}{\mathcal{L}}
 
-\newcommand{\ProbType}{\mathrm{Problem}}
+\newcommand{\ProbType}[1]{\mathrm{Prob}\langle{#1}\rangle}
+\newcommand{\SubstType}[1]{\mathrm{Subst}\langle{#1}\rangle}
 
 % Domain-specific function symbols
 \newcommand{\Bc}{\mathit{bc}}
@@ -49,15 +59,18 @@
 \newcommand{\FPos}{\mathcal{FP\!}\mathit{os}}
 \newcommand{\Var}{\mathcal{V}\!\mathit{ar}}
 \newcommand{\Sig}{\mathcal{S}\hspace{-1pt}\mathit{ig}}
+\newcommand{\Sorts}{\mathcal{S}\hspace{-1pt}\mathit{orts}}
 
 \newcommand{\Terms}{\mathit{T}}
 \newcommand{\TermAlg}{\mathcal{T}}
 
-\newcommand{\Sorts}{\mathcal{S}}
+\newcommand{\SortSet}{\mathcal{S}}
 
 \newcommand{\Arity}{\mathit{arity}}
 \newcommand{\Root}{\mathit{root}}
 \newcommand{\ConsDepth}{\textit{$\Cons$-depth}}
+
+\newcommand{\Length}{\mathit{length}}
 
 % Indicate failure of an algorithm
 \newcommand{\Fail}{\mathrm{FAIL}}
@@ -74,6 +87,24 @@
 \newcommand{\ToFrom}[2][]{\leftrightarrow^{#1}_{#2}}
 \newcommand{\JoinTo}[1]{\downarrow^{}_{#1}}
 \newcommand{\Equals}[2][]{\approx^{#1}_{#2}}
+
+\newcommand{\ToBC}[1][]{\To[#1]{\BC}}
+\newcommand{\FromBC}[1][]{\From[#1]{\BC}}
+\newcommand{\ToFromBC}[1][]{\ToFrom[#1]{\BC}}
+\newcommand{\JoinToBC}[0]{\JoinTo{\BC}}
+\newcommand{\EqualsBC}[1][]{\Equals[#1]{\BC}}
+
+\newcommand{\ToF}[1][]{\To[#1]{\FF}}
+\newcommand{\FromF}[1][]{\From[#1]{\FF}}
+\newcommand{\ToFromF}[1][]{\ToFrom[#1]{\FF}}
+\newcommand{\JoinToF}[0]{\JoinTo{\FF}}
+\newcommand{\EqualsF}[1][]{\Equals[#1]{\FF}}
+
+\newcommand{\ToBCF}[1][]{\To[#1]{(\BCUF)}}
+\newcommand{\FromBCF}[1][]{\From[#1]{(\BCUF)}}
+\newcommand{\ToFromBCF}[1][]{\ToFrom[#1]{(\BCUF)}}
+\newcommand{\JoinToBCF}[0]{\JoinTo{(\BCUF)}}
+\newcommand{\EqualsBCF}[1][]{\Equals[#1]{(\BCUF)}}
 
 \newcommand{\InfTo}[2][]{\Rightarrow^{#1}_{#2}}
 \newcommand{\InfFrom}[2][]{\Leftarrow^{#1}_{#2}}
@@ -122,6 +153,10 @@
 \newcommand{\DepGraph}{\SubDep{\Graph}}
 \newcommand{\PropGraph}{\SubProp{\Graph}}
 
+\newcommand{\FreeClasses}{\text{\textit{free-classes}}}
+\newcommand{\FreeDepth}{\text{\textit{free-depth}}}
+\newcommand{\MaxClasses}{\text{\textit{max-classes}}}
+
 \newcommand{\Oper}[1]{\lstinline|#1|}
 
 \newcommand{\V}[2]{\mathit{#1}\ifstrempty{#2}{}{{:} {#2}}}
@@ -131,6 +166,10 @@
 \newcommand{\Iff}{\Leftrightarrow}
 
 \newcommand{\Alg}[1]{\texorpdfstring{\mathcal{A}_{#1}}{A{#1}}}
+
+\newcommand{\AlgBCF}{\Alg{(\BCUF)}}
+\newcommand{\AlgBC}{\Alg{\BC}}
+\newcommand{\AlgF}{\Alg{\FF}}
 
 \newcommand{\INF}[1]{\texorpdfstring{\mathcal{I}_{#1}}{I{#1}}}
 
@@ -149,4 +188,6 @@
 }
 
 \newcommand{\InfDef}[4]{\CondInfDef{#1}{#2}{#3}{#4}{}}
+
+\newcommand{\InfRef}[1]{\ref{inf:#1}}
 

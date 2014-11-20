@@ -16,22 +16,22 @@ $\Var(t)$ for the set of variables in $t$, and $\Sig(t)$ for the set of
 function symbols in $t$, also called the signature of $t$. The root symbol of
 $t$ is denoted $\Root(t)$.
 
-A function $\sigma$ on $\Terms(\Sigma, \X)$ is a \emph{substitution} if it is
-an endomorphism over $\Terms(\Sigma, \X)$ and $\sigma(t) = t$ for almost all
-terms $t$. We write $\Sub{\sigma}{V}$ for the restriction of $\sigma$ to domain
-$V$ such that $(\Sub{\sigma}{V})(x) = x$ for any variable $x$ not in $V$.
+A function $\Subst$ on $\Terms(\Sigma, \X)$ is a \emph{substitution} if it is
+an endomorphism over $\Terms(\Sigma, \X)$ and $\Subst(t) = t$ for almost all
+terms $t$. We write $\Sub{\Subst}{V}$ for the restriction of $\Subst$ to domain
+$V$ such that $(\Sub{\Subst}{V})(x) = x$ for any variable $x$ not in $V$.
 Substitutions will often be given as a mapping of variables, e.g., $\{ x
 \mapsto a,\, y \mapsto b \}$. A function from variables to terms can be
-naturally extended to a substitution. We write $\Sig(\sigma)$ for the signature
-of a substitution $\sigma$.
+naturally extended to a substitution. We write $\Sig(\Subst)$ for the signature
+of a substitution $\Subst$.
 
 There is a partial order $\LessGeneralThan$ on terms given by $t_1
-\LessGeneralThan t_2$ if and only if $t_1 = \sigma(t_2)$ for some substitution
-$\sigma$. If $\sigma$ is important, this can be written as $t_1
-\LessGeneralThan[\sigma] t_2$. Here $t_1$ is said to be \emph{less general
+\LessGeneralThan t_2$ if and only if $t_1 = \Subst(t_2)$ for some substitution
+$\Subst$. If $\Subst$ is important, this can be written as $t_1
+\LessGeneralThan[\Subst] t_2$. Here $t_1$ is said to be \emph{less general
 than}, or \emph{subsumed by}, $t_2$. There is a similar ordering for
-substitutions, where $\sigma_1 \LessGeneralThan \sigma_2$ if and only if
-$\sigma_1 = \theta \Compose \sigma_2$ for some substitution $\theta$.
+substitutions, where $\Subst[1] \LessGeneralThan \Subst[2]$ if and only if
+$\Subst[1] = \AltSubst \Compose \Subst[2]$ for some substitution $\AltSubst$.
 
 \section{Equational Theories and Term Rewriting}\label{sec:eq-sys-term-rew}
 
@@ -72,10 +72,11 @@ Given an theory $E$, an instance of the \emph{unification problem modulo $E$}
 (or the \emph{$E$-unification problem}) is a set of equations\footnote{The
 symbol $\ueq$ rather than $\Equals{}$ is customary to indicate that these are
 equations to be solved rather than axioms.} $\Prob = \{ s_1 \ueq t_1, \dotsc,
-s_n \ueq t_n \}$. A solution is a substitution $\sigma$ such that $\sigma(s_1)
-\Equals{E} \sigma(t_1) \; \wedge \; \dotsb \; \wedge \; \sigma(s_n) \Equals{E}
-\sigma(t_n)$. Such a solution is called an \emph{$E$-unifier} of $\Prob$, or
-simply a \emph{unifier} if the theory is clear from context.
+s_n \ueq t_n \}$. A solution is a substitution $\Unifier$ such that $\Unifier(s_1)
+\Equals{E} \Unifier(t_1) \; \wedge \; \dotsb \; \wedge \; \Unifier(s_n) \Equals{E}
+\Unifier(t_n)$. Such a solution is called an \emph{$E$-unifier} of $\Prob$, or
+simply a \emph{unifier} if the theory is clear from context. Also, we will often
+call $\Prob$ an $E$-unification problem.
 
 The $E$-unification problem comes in three flavors, with decreasing degrees of
 restriction on the signature of the input problem $\Prob$. First is
@@ -84,10 +85,24 @@ is \emph{unification with constants}, where $\Sig(\Prob) \setminus \Sig(E)$
 contains only constants. Last is \emph{general unification}, where no
 restrictions are placed on $\Sig(\Prob)$.
 
-If every instance of the $E$-unification problem has at most one solution, the
+If $\Unifier$ is an $E$-unifier of a problem $\Prob$, and $\Unifier$ is maximal
+among $E$-unifiers of $\Prob$ under the subsumption ordering $\sqsubseteq$, we
+say $\Unifier$ is a \emph{most general $E$-unifier} of $\Prob$. If every instance
+of the $E$-unification problem has at most one most general unifier, the
 $E$-unification problem is said to be \emph{unitary}. If there are at most a
-finite number of solutions, it is said to be \emph{finitary}. Otherwise the
-problem is said to be \emph{infinitary}.
+finite number of most general unifiers, it is said to be \emph{finitary}.
+Otherwise the problem is said to be \emph{infinitary}.
+
+An \emph{$E$-unification algorithm} is an algorithm that solves the unification
+problem modulo $E$. We can think of a unification algorithm $\Alg{}$ as a
+relation on unification problems and substitutions such that $\Alg{}(\Prob,
+\Unifier)$ if and only if $\Unifier$ is a most general $E$-unifier of $\Prob$.
+Equivalently, we can think of $\Alg{}$ as a function from unification problems
+to sets of substitutions such that
+\[ \Alg{}(\Prob) := \{ \Unifier \mid \Alg{}(\Prob, \Unifier) \} \]
+For a given problem $\Prob$, $\Alg{}(\Prob)$ may be an infinite set if
+unication modulo $E$ is not finitary. A problem $\Prob$ is $E$-unifiable if and
+only if $\Alg{}(\Prob)$ is not the empty set.
 
 \section{Standard Form and DAG-Solved Form}\label{sec:std-form}
 
@@ -110,10 +125,10 @@ hold:
 \end{enumerate}
 
 This second condition gives dag-solved form its name, since the equations can
-be thought to form an acyclic graph. For such a problem in
-dag-solved form, the substitution
-\[\sigma = \{ x_n \mapsto t_n \} \Compose \dotsb \Compose \{ x_1 \mapsto t_1 \}\]
-is always a solution.
+be thought to form an acyclic graph. For such a problem in dag-solved form, the
+substitution
+\[\Unifier = \{ x_n \mapsto t_n \} \Compose \dotsb \Compose \{ x_1 \mapsto t_1 \}\]
+is always a unifier.
 
 If a problem has a variable that is the left-hand side of two different equations,
 e.g., $x \ueq t_1$ and $x \ueq t_2$, then we call this a \emph{peak}. If
@@ -129,16 +144,20 @@ $\Prob$, there is an edge from $x$ to each $y_i$ labelled $(f, i)$.
 
 \section{Many-Sorted Signatures}\label{sec:sorts}
 
-We will be considering many-sorted signatures over a set of sorts $\Sorts$.
+We will be considering many-sorted signatures over a set of sorts $\SortSet$.
 Each symbol's arity, rather than being simply a number, is a type signature
-composed of sorts from $\Sorts$ --- e.g., $\Arity(f) = s_1 \times \dotsb \times
+composed of sorts from $\SortSet$ --- e.g., $\Arity(f) = s_1 \times \dotsb \times
 s_n \to s'$. We assume that $\X$ is partitioned by sort such that $\X =
-\biguplus_{s \in \Sorts} \X_{s}$ and variables in $\X_{s}$ can only be
+\biguplus_{s \in \SortSet} \X_{s}$ and variables in $\X_{s}$ can only be
 instantiated by terms of sort $s$. We further assume that $\Terms(\Sigma, \X)$
 only contains well-typed terms. There is a sort relation such that $t : s$ if
 and only if $\Arity(\Root(t))$ has range $s$. Variables are annotated by sorts,
 where variable $\V{x}{s} \in \X_s$ can only be instantiated with a term of sort
 $s$.
+
+For a signature $\Sigma$, we denote by $\Sorts(\Sigma)$ the set of sorts. We
+extend this function to anything defined over a signature, e.g.,
+$\Sorts(\EqTheory)$ for the sorts equational theory $\EqTheory$.
 
 As a notational short-hand for the sorts we study in this paper, we will write
 a dot over variables of sort $\Elt$. So $\Ve{x}$ and $\V{x}{\Elt}$ are the
@@ -156,8 +175,8 @@ A \emph{problem pattern} is an expression of the form $S \uplus \{ s_1 \ueq
 t_1, \dotsc, s_n \ueq t_n \}$, where $S$ is a set name and $s_i \ueq t_i$ is an
 equation. Such a problem pattern is said to match a problem $\Prob$ if and only
 if $\Prob = \Prob' \uplus \{ s'_1 \ueq t'_1, \dotsc, s'_n \ueq t'_n \}$, where
-$\uplus$ is disjoint union, and each $s'_i = \theta(s_i)$ and $t'_i =
-\theta(t_i)$ for some substitution $\theta$.
+$\uplus$ is disjoint union, and each $s'_i = \Subst(s_i)$ and $t'_i =
+\Subst(t_i)$ for some substitution $\Subst$.
 
 Our notion of an inference rule is different from the standard notion from
 symbolic logic. For our purposes, an \emph{inference rule} is a tripple
@@ -175,10 +194,10 @@ and is written:
 \]
 An inference rule $\rho$ can be applied to a problem $\Prob$ if its condition
 holds (or was ommitted) and its premise matches $\Prob$ with substitution
-$\theta$. We then obtain a new problem $\Prob'$ and write $\Prob \InfTo{\rho}
+$\Subst$. We then obtain a new problem $\Prob'$ and write $\Prob \InfTo{\rho}
 \Prob'$, where
-\[ \Prob' := S \cup \{ \theta(s'_1) \ueq \theta(t'_1), \dotsc, \theta(s'_n)
-\ueq \theta(t'_n) \} \]
+\[ \Prob' := S \cup \{ \Subst(s'_1) \ueq \Subst(t'_1), \dotsc, \Subst(s'_n)
+\ueq \Subst(t'_n) \} \]
 In this case, $\Prob$ may be referred to as the premise, and $\Prob'$ as the
 conclusion, even though technically they are \emph{instances of} the premise
 and conclusion.
@@ -189,8 +208,11 @@ indicates that the original problem was unsolvable.
 
 An \emph{inference system} is a set of inference rules. An inference system
 $\INF{}$ can be applied to a problem $\Prob$ to obtain a new problem $\Prob'$,
-written $\Prob \InfTo{\INF{}} \Prob'$ if and only if there is an inference rule
-$\rho$ in $\INF{}$ such that $\Prob \InfTo{\rho} \Prob'$.
+written $\Prob \InfTo{\INF{}} \Prob'$, if and only if there is an inference rule
+$\rho$ in $\INF{}$ such that $\Prob \InfTo{\rho} \Prob'$. If $\Prob$ and
+$\Prob'$ are problems such that $\Prob \InfTo[*]{\INF{}} \Prob'$, and no rule
+in $\INF{}$ is applicable to $\Prob'$, we write $\Prob \InfTo[!]{\INF{}}
+\Prob'$.
 
 Note that the process for choosing inference rules is left unspecified. Often
 more than once inference rule in a system will be applicable to the same
@@ -201,7 +223,7 @@ will terminate at all. An inference system should be accompanied by a
 
 An inference rule $\rho$ is said to be \emph{sound} if and only if, for every
 pair of problems $\Prob$ and $\Prob'$ such that $\Prob \InfTo{\rho} \Prob'$,
-every solution of $\Prob'$ is a solution of $\Prob$. Such a rule is said to be
-\emph{deterministic} if and only if every solution of $\Prob$ is a solution of
+every unifier of $\Prob'$ is a unifier of $\Prob$. Such a rule is said to be
+\emph{deterministic} if and only if every unifier of $\Prob$ is a unifier of
 $\Prob'$.
 

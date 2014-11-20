@@ -31,6 +31,8 @@ We can combine \Oper{chain} with addition, in
 Since we are dealing with first order theorems, we will usually consider
 \Oper{chain} as an un-curried function with a fixed function $f$.
 
+
+
 \section{Cipher Block Chaining}\label{sec:cbc}
 
 The technique of \emph{cipher block chaining} was invented in 1978 at
@@ -49,16 +51,55 @@ the ciphertext will contain blocks $[C_1, \dotsc, C_n]$ such that:
     C_{i+1} &= e_k(M_i \oplus C_i)
 \end{align*}
 where $e_k$ is a function for block-level encryption with a key $k$, $\oplus$
-is XOR, and $IV$ is an initialization vector.
+is bitwise XOR, and $IV$ is an initialization vector.
 
 The block chaining operation can be seen as an instance of \Oper{chain}, where
-the function is XOR. In later sections, we will use block chaining as a
+the function is XOR\@. In later sections, we will use block chaining as a
 motivating example of studying chaining in general.
 
-\section{\texorpdfstring{$\BC$}{BC} Theory}\label{sec:bc-theory}
+
+
+\section{List Terms}
+To study chaining, we must first represent lists as terms. We use two sorts,
+$\Elt$ and $\List$, and the standard list LISP-style constructors, $\Cons\colon
+\Elt \times \List \to \List$ and $\Nil\colon \List$. A term of sort $\Elt$ is
+said to be an \emph{element term}, and similarly a term of sort $\List$ is a
+\emph{list term}. A list $[a, b, c]$ would be represented by the list term
+$\Cons(a, \Cons(b, \Cons(c, \Nil)))$, where $a$, $b$, and $c$ are element
+constants.
+
+We disallow list constants other than $\Nil$, so the only ground list terms are
+``proper'' $\Nil$-terminated lists. A list can also be terminated by a
+variable, e.g. $[a, b \mid \Vl{x}]$ (in Prolog notation), which is represented
+by the term $\Cons(a, \Cons(b, \Vl{x}))$.
+
+\begin{Definition}
+    Let $\Sigma$ be a signature containing $\Nil$, and let $E$ be an equational
+    theory defined over $\Sigma$. We say a term $t$ is \emph{nonnil} if and
+    only if $t \not\Equals{\EqTheory} \Nil$.
+
+    As an extension, let $\Prob$ be an $\EqTheory$-unification problem. We say
+    a list variable $\Vl{x}$ is nonnil if and only if $\Unifier(\Vl{x})$ is
+    nonnil for every $\EqTheory$-unifier $\Unifier$ of $\Prob$.
+\end{Definition}
+
+\begin{Definition}
+    Let $\Sigma$ be a signature containing $\Cons$, and let $\X$ be a set of
+    variables. We define a function $\Length \colon \Terms(\Sigma, \X) \to
+    \Nat$ such that $\Length(t)$ is the number of occurrences of the symbol
+    $\Cons$ in term $t$.
+\end{Definition}
+
+It is not difficult to see that this definition of $\Length$ matches with the
+standard concept of the length of a list, assuming that all other list function
+symbols are length-preserving operations on lists.
+
+
+
+\section{Chaining Theory $\BC$}\label{sec:bc-theory}
 To study the chaining operation, we will create an equational theory $\BC$ such
-that chaining is a model. Our theory will have two sorts, $\Elt$ and $\List$, and
-the following signature:
+that chaining is a model. Our theory will have two sorts, $\Elt$ and $\List$,
+and the following signature:
 \begin{align*}
     \Bc &\colon \Elt \times \List \to \List &
     \Cons &\colon \Elt \times \List \to \List \\
@@ -66,35 +107,65 @@ the following signature:
     \Nil &\colon \List
 \end{align*}
 
-Here $\Bc$ is our chaining operator (\textbf{b}lock \textbf{c}hain), $\Ff$ is
-the fixed function to be chained, and $\Cons$ and $\Nil$ are the standard list
-constructors. We define $\BC$ to have the following two axioms:
+Here $\Bc$ is our chaining operator (\underline{b}lock \underline{c}hain),
+$\Ff$ is the fixed function to be chained, and $\Cons$ and $\Nil$ are the
+standard list constructors. We define $\BC$ to have the following two axioms:
 \begin{align*}
     \Bc(\Ve{x}, \Nil) &\Equals{} \Nil \\
     \Bc(\Ve{x}, \Cons(\Ve{y}, \Vl{z}))
     &\Equals{} \Cons(\Ff(\Ve{y}, \Ve{x}), \Bc(\Ff(\Ve{y}, \Ve{x}), \Vl{z}))
 \end{align*}
-We can orient these rules from left to right to create a rewrite system
-$R_\BC$:
+We can orient these rules from left to right to create a rewrite system $\RBC$:
 \begin{align*}
     \Bc(\Ve{x}, \Nil) &\To{} \Nil \\
     \Bc(\Ve{x}, \Cons(\Ve{y}, \Vl{z}))
     &\To{} \Cons(\Ff(\Ve{y}, \Ve{x}), \Bc(\Ff(\Ve{y}, \Ve{x}), \Vl{z}))
 \end{align*}
 
+To simplify our notation, we will write $\ToBC$ rather than $\To{\RBC}$.
+
 \begin{Lemma}
-    The rewrite system $R_\BC$ is convergent.
+    The rewrite system $\RBC$ is convergent.
 \end{Lemma}
 \begin{proof}
-    It is straightforward that $R_\BC$ is confluent, because there are no
-    critical pairs ($\Cons$ and $\Nil$ clash). To prove $R_\BC$ terminating,
+    It is straightforward that $\RBC$ is confluent, because there are no
+    critical pairs ($\Cons$ and $\Nil$ clash). To prove $\RBC$ terminating,
     note that all terms have finite size and depth. The first rule removes an
     occurrence of $\Bc$ with each application and must terminate. The second
     preserves the size of the term, but increases the depth of an occurrence of
     $\Bc$. Eventually all occurrences of $\Bc$ will be lower than the
-    occurrences of $\Cons$, so the rule must terminate. So $R_\BC$ is
-    terminating and thus it is confluent.
+    occurrences of $\Cons$, so the rule must terminate. So $\RBC$ is confluent
+    and terminating and thus it is convergent.
 \end{proof}
+
+The chaining operation preserves the lengths of lists. We can thus show that
+our $\Length$ function still makes sense.
+
+\begin{Lemma}\label{lemma:rbc-preserve-cons}
+    Let $t_1$ and $t_2$ be terms such that $t_1 \ToBC t_2$. Then $\Length(t_1)
+    = \Length(t_2)$.
+\end{Lemma}
+\begin{proof}
+    Both rules of $\RBC$ have the same number of occurrences of $\Cons$ on each
+    side. Note that element variables cannot be assigned a term containing
+    occurrences of $\Cons$, because the only symbol with $\Elt$ as its codomain
+    is $\Ff$, which does not have $\List$ in its domain. Further, in the second
+    rule, both sides have the same number of occurrences of $\Cons$, and both
+    sides have the same number of occurrences of $\Vl{z}$. Thus both rules
+    preserve the number of occurrences of $\Cons$.
+\end{proof}
+
+\begin{Corollary}\label{cor:bc-preserve-cons}
+    Let $t_1$ and $t_2$ be terms such that $t_1 \EqualsBC t_2$. Then
+    $\Length(t_1) = \Length(t_2)$.
+\end{Corollary}
+\begin{proof}
+    Since $\RBC$ is convergent, $t_1 \EqualsBC t_2$ if and only if $t_1
+    \JoinToBC t_2$. Thus the corollary follows from the fact that each step of
+    the rewrite proof preserves the lengths of the terms.
+\end{proof}
+
+
 
 \section{Element Theory \texorpdfstring{$\FF$}{F}}\label{sec:elt-theory}
 
@@ -104,76 +175,264 @@ equational theory $\FF$ called the \emph{element theory}. This theory defines
 the function symbol $\Ff\colon \Elt \times \Elt \to \Elt$. A theory $\FF$ must
 satisfy four conditions to be an element theory:
 \begin{enumerate}[(i)]
-    \item $\FF$ and $\BC$ are \emph{disjoint except for $\Ff$}, i.e.,
-        $\Sig(\FF) \, \cap \, \Sig(\BC) \subseteq \{ \Ff \}$.
-    \item $\FF$ is \emph{subterm-collapse-free in $\Ff$}, i.e., there is no
-        term $t$ such that $\Root(t) = \Ff$ and $t \Equals{\FF} \Sub{t}{p}$ for
-        $p \neq \Empty$.
-    \item $\Ff$ is \emph{semicancellative}, i.e., if $\Ff(t_1, t_2)
-        \Equals{\FF} \Ff(t_3, t_4)$, then $t_1 \Equals{\FF} t_3 \, \Iff \, t_2
-        \Equals{\FF} t_4$.
+    % \item $\FF$ and $\BC$ are \emph{disjoint except for $\Ff$}, i.e.,
+    %     $\Sig(\FF) \, \cap \, \Sig(\BC) \subseteq \{ \Ff \}$.
+    \item $\List \not\in \Sorts(\FF)$.
+    \item $\FF$ is \emph{subterm-collapse-free for $\Ff$}, i.e., there is no
+        term $t$ such that $\Root(t) = \Ff$ and $t \EqualsF \Sub{t}{p}$ for $p
+        \neq \Empty$.
+    \item $\Ff$ is \emph{semicancellative in $\FF$}, i.e., if $\Ff(t_1, t_2)
+        \EqualsF \Ff(t_3, t_4)$, then $t_1 \EqualsF t_3 \, \Iff \, t_2 \EqualsF
+        t_4$.
     \item The $\FF$-unification problem is finitary.
 \end{enumerate}
-Note that the first condition does not preclude $\FF$ from using function
-symbols in addition to $\Ff$. It just says those symbols cannot be $\Bc$,
-$\Cons$, or $\Nil$.
 
 \begin{Lemma}
-    The trivial theory $\varnothing$ is an element theory.
+    The empty theory $\varnothing$ is an element theory.
 \end{Lemma}
 \begin{proof}
-    The first condition is vacuously true, since the trivial theory has no
+    The first condition is vacuously true, since the empty theory has no
     signature. For the remaining conditions, recall that $t_1
     \Equals{\varnothing} t_2$ if and only if $t_1 = t_2$. Thus the second
     condition holds because a term cannot be identically equal to a proper
-    subterm of itself. The third condition holds because if $\Ff(t_1, t_2)
-    \Equals{\FF} \Ff(t_3, t_4)$, then by decomposition $t_1 \Equals{\FF} t_3$
-    and $t_2 \Equals{\FF} t_4$. Finally, the fourth condition holds since
-    unification modulo the empty theory is unitary.
+    subterm of itself. The third condition holds because, if $\Ff(t_1, t_2)
+    \Equals{\varnothing} \Ff(t_3, t_4)$, then by decomposition $t_1
+    \Equals{\varnothing} t_3$ and $t_2 \Equals{\varnothing} t_4$. Finally, the
+    fourth condition holds because unification modulo the empty theory is
+    unitary.
 \end{proof}
 
-Let $E_\oplus$ be the following equational theory:
-\begin{align*}
-    x \oplus x &\Equals{} 0 \\
-    x \oplus 0 &\Equals{} x \\
-    x \oplus y &\Equals{} y \oplus x \\
-    (x \oplus y) \oplus z &\Equals{} x \oplus (y \oplus z)
-    \intertext{One model for $E_\oplus$ is bits under exclusive OR. Now let
-    $\FF_\oplus$ be $E_\oplus$ with the following additional axiom:}
-    \Ff(x, y) &\Equals{} e(x \oplus y)
-\end{align*}
+% Let $E_\oplus$ be the following equational theory:
+% \begin{align*}
+%     x \oplus x &\Equals{} 0 \\
+%     x \oplus 0 &\Equals{} x \\
+%     x \oplus y &\Equals{} y \oplus x \\
+%     (x \oplus y) \oplus z &\Equals{} x \oplus (y \oplus z)
+%     \intertext{One model for $E_\oplus$ is bits under bitwise XOR. Now let
+%     $\FF_\oplus$ be $E_\oplus$ with the following additional axiom:}
+%     \Ff(x, y) &\Equals{} e(x \oplus y)
+% \end{align*}
+% 
+% \begin{Lemma}
+%     The theory $\FF_\oplus$ is an element theory.
+% \end{Lemma}
+% \begin{proof}
+%     The first condition clearly holds, since $\Sig(\FF_\oplus) = \{ e, \Ff,
+%     \oplus, 0 \}$. For the second condition, note that every $\Ff$-rooted
+%     term is $\FF_\oplus$-equivalent to an $e$-rooted term, and $e$ is unintereted.
+% 
+%     To prove the third condition, consider terms $t_1$, $t_2$, $t_3$ and $t_4$
+%     such that
+%     \[\Ff(t_1, t_2) \Equals{\FF_\oplus} \Ff(t_3, t_4)\]
+%     % Suppose $\Ff$ is not semi-cancellative. Without loss
+%     % of generality, assume $t_1 \Equals{\FF_\oplus} t_3$ but $t_2 \not\Equals{\FF_\oplus} t_4$.
+%     Since $\Ff(t_1, t_2) \Equals{\FF_\oplus} e(t_1 \oplus t_2)$ and $\Ff(t_3,
+%     t_4) \Equals{\FF_\oplus} e(t_3 \oplus t_4)$, and since $e$ is an uninterpreted
+%     function symbol, we have that
+%     \[t_1 \oplus t_2 \Equals{\FF_\oplus} t_3 \oplus t_4\]
+%     There are then three possibilities for the terms:
+%     \begin{enumerate}[(i)]
+%         \item $t_1 \Equals{\FF_\oplus} t_3$ and $t_2 \Equals{\FF_\oplus} t_4$
+%         \item $t_1 \Equals{\FF_\oplus} t_2$ and $t_3 \Equals{\FF_\oplus} t_4$
+%         \item $t_1 \Equals{\FF_\oplus} t_4$ and $t_2 \Equals{\FF_\oplus} t_3$
+%     \end{enumerate}
+%     Suppose, without loss of generality, that $t_1 \Equals{\FF_\oplus} t_3$. In the
+%     first case, we have immediately that $t_2 \Equals{\FF_\oplus} t_4$. In the
+%     second and third cases, by transitivity of $\Equals{\FF_\oplus}$, we find that
+%     \[t_1 \Equals{\FF_\oplus} t_2 \Equals{\FF_\oplus} t_3 \Equals{\FF_\oplus} t_4 \]
+%     and thus $t_2 \Equals{\FF_\oplus} t_4$.
+% \end{proof}
 
-\begin{Lemma}
-    The theory $\FF_\oplus$ is an element theory.
+
+
+\section{Combined Theory $(\BCUF)$}\label{sec:cancel}
+
+Suppose we have an element theory $\FF$. By definition $\Ff$ is
+semicancellative in $\FF$, and thus $\Ff$ is semicancellative in $\BCUF$. We
+would like to extend this property to $\Bc$ and say that $\Bc$ is
+semicancellative in $\BCUF$, but unfortunately this is not so. Consider the
+equivalence
+\[\Bc(a, \Nil) \EqualsBCF \Bc(b, \Nil)\]
+where $a$ and $b$ are distinct constants. Of course $\Nil \EqualsBCF \Nil$, but
+$a \not\EqualsBCF b$. Thus $\Bc$ is not semicancellative. We can, however, say
+the following.
+
+\begin{Lemma}\label{lemma:bc-listless-cancel}
+    Let $t_1$, $t_2$, $t_3$, and $t_4$ be terms containing no occurrences of
+    $\Cons$ or $\Nil$ such that $\Bc(t_1, t_2) \EqualsBCF \Bc(t_3, t_4)$. Then
+    $t_1 \EqualsBCF t_3$ and $t_2 \EqualsBCF t_4$.
 \end{Lemma}
-\begin{proof}
-    The first condition clearly holds, since $\Sig(\FF_\oplus) = \{ e, \Ff,
-    \oplus, 0 \}$. For the second condition, note that every $\Ff$-rooted
-    term is $\FF_\oplus$-equivalent to an $e$-rooted term, and $e$ is unintereted.
 
-    To prove the third condition, consider terms $t_1$, $t_2$, $t_3$ and $t_4$
-    such that
-    \[\Ff(t_1, t_2) \Equals{\FF_\oplus} \Ff(t_3, t_4)\]
-    % Suppose $\Ff$ is not semi-cancellative. Without loss
-    % of generality, assume $t_1 \Equals{\FF_\oplus} t_3$ but $t_2 \not\Equals{\FF_\oplus} t_4$.
-    Since $\Ff(t_1, t_2) \Equals{\FF_\oplus} e(t_1 \oplus t_2)$ and $\Ff(t_3,
-    t_4) \Equals{\FF_\oplus} e(t_3 \oplus t_4)$, and since $e$ is an uninterpreted
-    function symbol, we have that
-    \[t_1 \oplus t_2 \Equals{\FF_\oplus} t_3 \oplus t_4\]
-    There are then three possibilities for the terms:
-    \begin{enumerate}[(i)]
-        \item $t_1 \Equals{\FF_\oplus} t_3$ and $t_2 \Equals{\FF_\oplus} t_4$
-        \item $t_1 \Equals{\FF_\oplus} t_2$ and $t_3 \Equals{\FF_\oplus} t_4$
-        \item $t_1 \Equals{\FF_\oplus} t_4$ and $t_2 \Equals{\FF_\oplus} t_3$
-    \end{enumerate}
-    Suppose, without loss of generality, that $t_1 \Equals{\FF_\oplus} t_3$. In the
-    first case, we have immediately that $t_2 \Equals{\FF_\oplus} t_4$. In the
-    second and third cases, by transitivity of $\Equals{\FF_\oplus}$, we find that
-    \[t_1 \Equals{\FF_\oplus} t_2 \Equals{\FF_\oplus} t_3 \Equals{\FF_\oplus} t_4 \]
-    and thus $t_2 \Equals{\FF_\oplus} t_4$.
+\begin{proof}
+    If there are no occurrences of $\Cons$ or $\Nil$, then the $\BC$ axioms are
+    inapplicable. So $\Bc(t_1, t_2) \EqualsF \Bc(t_3, t_4)$, and the symbol
+    $\Bc$ is essentially a constructor. Thus $\Bc$ is cancellative, and the
+    lemma follows.
 \end{proof}
 
-\section{Inductive Theory}\label{sec:inductive-theory}
+So, if we disallow the list constructors, $\Bc$ is cancellative. This is
+relevant for equivalences such as $\Bc(\Ve{u}, \Vl{v}) \EqualsBCF \Bc(\Ve{w},
+\Vl{x})$, where we can deduce that $\Ve{u} \EqualsBCF \Ve{w}$ and $\Vl{v}
+\EqualsBCF \Vl{x}$. If we allow arbitrary terms, we can still get a partial
+result.
 
-\section{Cancellativity and Semicancellativity}\label{sec:cancel}
+\begin{Lemma}\label{lemma:bc-left-cancel}
+    Let $\FF$ be an element theory, and let $t_1$, $t_2$, $t_3$, and $t_4$ be
+    terms such that
+    \begin{equation}\label{eq:bc-left-cancel}
+        \Bc(t_1, t_2) \EqualsBCF \Bc(t_3, t_4). \tag{$\ast$}
+    \end{equation}
+    If $t_1 \EqualsBCF t_3$, then $t_2 \EqualsBCF t_4$.
+\end{Lemma}
+
+\begin{proof}
+    We will prove the lemma using structural induction on the lengths of $t_2$
+    and $t_4$. We assume that the lemma holds for any ground terms
+    $t'_1$, $t'_2$, $t'_3$, and $t'_4$ such that
+    \[\Bc(t'_1, t'_2) \EqualsBCF \Bc(t'_3, t'_4)\]
+    and
+    \[\Length(t'_2) + \Length(t'_4) < \Length(t_2) + \Length(t_4).\]
+    Note that $t_1$ and $t_3$ are element terms and thus cannot contain
+    occurrences of $\Cons$.
+
+    Suppose $t_1 \EqualsBCF t_3$. We first consider the base case when
+    $\Length(t_2) + \Length(t_4) = 0$. If $t_2 \EqualsBCF t_4 \EqualsBCF \Nil$
+    then we are done. Otherwise, $t_2$ and $t_4$ do not contain $\Nil$, and
+    the result follows from \cref{lemma:bc-listless-cancel}.
+
+    In the inductive case, neither $t_2$ nor $t_4$ can be equivalent to $\Nil$,
+    because we showed in \cref{cor:bc-preserve-cons} that $\BC$ preserves the
+    number of $\Cons$ symbols. We see then that
+    \begin{align*}
+        t_2 &\EqualsBCF \Cons(t_{21}, t_{22}) \\
+        t_4 &\EqualsBCF \Cons(t_{41}, t_{42})
+    \end{align*}
+    for some ground terms $t_{21}$, $t_{22}$, $t_{41}$, and $t_{42}$ in
+    $\RBC$-normal form. We can rewrite the left- and right-hand sides of
+    \cref{eq:bc-left-cancel} to obtain the following:
+    \[\Bc(t_1, \Cons(t_{21}, t_{22})) \EqualsBCF \Bc(t_3, \Cons(t_{41}, t_{42})).\]
+    At this point, we can apply the first $\BC$ axiom and arrive at
+    \[\Cons(\Ff(t_{21}, t_1), \Bc(\Ff(t_{21}, t_1), t_{22})) \EqualsBCF
+    \Cons(\Ff(t_{41}, t_3), \Bc(\Ff(t_{41}, t_3), t_{42}))\]
+    which, since $\Cons$ is cancellative, decomposes into
+    \begin{align*}
+        \Ff(t_{21}, t_1) &\EqualsBCF \Ff(t_{41}, t_3) \\
+        \Bc(\Ff(t_{21}, t_1), t_{22}) &\EqualsBCF \Bc(\Ff(t_{41}, t_3), t_{42}).
+    \end{align*}
+    Recall that $f$ is semicancellative and that, by assumption, $t_1 \EqualsBCF
+    t_3$. Thus, we have that $t_{21} \EqualsBCF t_{41}$. Note that $t_{22}$ and
+    $t_{42}$ each have one fewer occurrence of $\Cons$ than $t_2$ and $t_4$,
+    respectively, so
+    \[\Length(t_{22}) + \Length(t_{42}) < \Length(t_2) + \Length(t_4)\]
+    and we can apply our inductive hypothesis to see that $t_{22} \EqualsBCF
+    t_{42}$. So, we finally see that
+    \[t_2 \EqualsBCF \Cons(t_{21}, t_{22}) \EqualsBCF \Cons(t_{41}, t_{42}) \EqualsBCF t_4\]
+    and the lemma is proven.
+\end{proof}
+
+Essentially, $\Bc$ is semicancellative in one direction. We call this property
+\emph{left-cancel\-lativity}. We saw in the example above that $\Nil$ causes
+trouble. However, if we restrict our attention to nonempty lists, we can say
+something stronger.
+
+\begin{Theorem}[Conditional semicancellativity of $\Bc$]\label{thm:bc-semi-cancel}
+    Let $\FF$ be an element theory, and let $t_1$, $t_2$, $t_3$, and $t_4$ be
+    terms such that $t_2$ and $t_4$ are nonnil and
+    \addtocounter{equation}{1}
+    \begin{equation}\label{eq:bc-semi-cancel}
+        \Bc(t_1, t_2) \EqualsBCF \Bc(t_3, t_4). \tag{$\ast$}
+    \end{equation}
+    Then $t_1 \EqualsBCF t_3$ if and only if $t_2 \EqualsBCF t_4$.
+\end{Theorem}
+
+\begin{proof}
+    For the `only if' direction, the lemma follows from
+    \cref{lemma:bc-left-cancel}.
+
+    For the `if' direction, since $t_2$ and $t_4$ are not equivalent to $\Nil$,
+    either $t_2$ and $t_4$ do not contain $\Cons$, in which case the result
+    follows from \cref{lemma:bc-listless-cancel}, or
+    \begin{align*}
+        t_2 &\EqualsBCF \Cons(t_{21}, t_{22}) \\
+        t_4 &\EqualsBCF \Cons(t_{41}, t_{42})
+    \end{align*}
+    for some terms $t_{21}$, $t_{22}$, $t_{41}$, and $t_{42}$ in $\RBC$-normal
+    form. We can rewrite the left- and right-hand sides of
+    \cref{eq:bc-semi-cancel} to obtain the following:
+    \[\Bc(t_1, \Cons(t_{21}, t_{22})) \EqualsBCF \Bc(t_3, \Cons(t_{41}, t_{42})).\]
+    At this point, we can apply the first $\BC$ axiom and arrive at
+    \[\Cons(\Ff(t_{21}, t_1), \Bc(\Ff(t_{21}, t_1), t_{22})) \EqualsBCF
+    \Cons(\Ff(t_{41}, t_3), \Bc(\Ff(t_{41}, t_3), t_{42}))\]
+    which, since $\Cons$ is cancellative, decomposes into
+    \begin{align*}
+        \Ff(t_{21}, t_1) &\EqualsBCF \Ff(t_{41}, t_3) \\
+        \Bc(\Ff(t_{21}, t_1), t_{22}) &\EqualsBCF \Bc(\Ff(t_{41}, t_3), t_{42}).
+    \end{align*}
+
+    Suppose $t_2 \EqualsBCF t_4$. Since $\Cons$ is cancellative, we then have
+    that $t_{21} \EqualsBCF t_{41}$ and $t_{22} \EqualsBCF t_{42}$. Recall that
+    $f$ is semicancellative, so $t_1 \EqualsBCF t_3$ and the theorem is proven.
+\end{proof}
+
+\begin{Corollary}\label{cor:bc-eq-tail}
+    Let $\FF$ be an element theory, and let $t_1$, $t_{21}$, $t_{22}$, $t_3$,
+    $t_{41}$, and $t_{42}$ be terms such that
+    \[\Bc(t_1, \Cons(t_{21}, t_{22})) \EqualsBCF \Bc(t_3, \Cons(t_{41}, t_{42})).\]
+    Then $t_{22} \EqualsBCF t_{42}$.
+\end{Corollary}
+
+\begin{proof}
+    From the proof of \cref{thm:bc-semi-cancel}, we see that
+    \begin{align*}
+        \Ff(t_{21}, t_1) &\EqualsBCF \Ff(t_{41}, t_3) \\
+        \Bc(\Ff(t_{21}, t_1), t_{22}) &\EqualsBCF \Bc(\Ff(t_{41}, t_3), t_{42}).
+    \end{align*}
+    Thus, by the conditional semicancellability of $\Bc$, we see that $t_{22}
+    \EqualsBCF t_{42}$.
+\end{proof}
+
+\begin{Theorem}\label{thm:bc-eq-cases}
+    Let $\FF$ be an element theory, and let $t_1$, $t_2$, $t_3$, and $t_4$ be
+    terms such that $\Bc(t_1, t_2) \EqualsBCF \Bc(t_3, t_4)$. Then at least one
+    of the following statements is true:
+    \begin{enumerate}[(i)]
+        \item $t_1 \EqualsBCF t_3$
+        \item $t_2 \EqualsBCF \Nil$ and $t_4 \EqualsBCF \Nil$
+        \item $t_2 \EqualsBCF \Cons(t_{21}, t_{22})$, $t_4 \EqualsBCF
+            \Cons(t_{41}, t_{42})$, and $t_{22} \EqualsBCF t_{42}$, for
+            some terms $t_{21}$, $t_{22}$, $t_{41}$, and $t_{42}$.
+    \end{enumerate}
+\end{Theorem}
+
+\begin{proof}
+    Suppose statements (i) and (ii) are false. By
+    \cref{lemma:bc-listless-cancel}, $t_2$ and $t_4$ must contain at least one
+    occurrence of either $\Cons$ or $\Nil$. Since they are nonnil by
+    assumption, they must contain at least one occurrence of $\Cons$. Thus,
+    \begin{align*}
+        t_2 &\EqualsBCF \Cons(t_{21}, t_{22}) \\
+        t_4 &\EqualsBCF \Cons(t_{41}, t_{42})
+    \end{align*}
+    for some terms $t_{21}$, $t_{22}$, $t_{41}$, and $t_{42}$, and by
+    \cref{cor:bc-eq-tail}, $t_{22} \EqualsBCF t_{42}$.
+
+    % Suppose statements (i) and (iii) are false. Again, by
+    % \cref{lemma:bc-listless-cancel}, $t_2$ and $t_4$ must contain at least one
+    % occurrence of either $\Cons$ or $\Nil$. By \cref{thm:bc-semi-cancel},
+    % either $t_2 \not\EqualsBCF t_4$, or $t_2$ and $t_4$ are both equivalent
+    % to $\Nil$. If $t_2 \not\EqualsBCF t_4$, they must contain at least one
+    % occurrence of $\Cons$. In that case,
+    % \begin{align*}
+    %     t_2 &\EqualsBCF \Cons(t_{21}, t_{22}) \\
+    %     t_4 &\EqualsBCF \Cons(t_{41}, t_{42})
+    % \end{align*}
+    % for some terms $t_{21}$, $t_{22}$, $t_{41}$, and $t_{42}$. However, our
+    % assumption that statement (iii) is false conflicts with
+    % \cref{cor:bc-eq-tail}. Thus it must be that $t_2 \EqualsBCF \Nil$ and $t_4
+    % \EqualsBCF \Nil$.
+
+    Suppose then that all three statements are false. Since statements (i) and
+    (ii) are false, statement (iii) must be true. This is a contradiction, thus
+    at least one statement must be true.
+\end{proof}
 
